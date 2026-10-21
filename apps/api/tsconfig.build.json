@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "rootDir": "./src" },
+  // Sondeo en lugar de eventos del SO: en Windows/Docker los eventos espurios provocaban recompilaciones y reinicios en cadena.
+  "watchOptions": { "watchFile": "dynamicPriorityPolling", "watchDirectory": "dynamicPriorityPolling", "fallbackPolling": "dynamicPriority" },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
+}

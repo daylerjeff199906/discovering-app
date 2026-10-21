@@ -1,0 +1,9 @@
+{
+  "extends": "@por-aqui/config-typescript/react.json",
+  "include": [".react-router/types/**/*", "app/**/*", "vite.config.ts", "react-router.config.ts", "vitest.config.ts"],
+  "compilerOptions": {
+    "rootDirs": [".", "./.react-router/types"],
+    "types": ["vite/client", "node"],
+    "noUncheckedIndexedAccess": true
+  }
+}

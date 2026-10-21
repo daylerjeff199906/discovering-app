@@ -1,0 +1,31 @@
+{
+  "name": "por-aqui",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Por aquí — beta web para descubrir recorridos, planear viajes y registrar visitas.",
+  "packageManager": "pnpm@11.12.0",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "infra:up": "docker compose -f infra/compose.yaml --env-file .env up -d --wait",
+    "infra:down": "docker compose -f infra/compose.yaml --env-file .env down",
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @por-aqui/e2e e2e",
+    "db:generate": "pnpm --filter @por-aqui/database db:generate",
+    "db:migrate": "pnpm --filter @por-aqui/database db:migrate",
+    "db:seed": "pnpm --filter @por-aqui/database db:seed",
+    "db:reset": "pnpm --filter @por-aqui/database db:reset",
+    "dev:packages": "turbo run watch --parallel",
+    "preview": "node scripts/preview.mjs"
+  },
+  "devDependencies": {
+    "turbo": "2.11.7",
+    "typescript": "5.9.3",
+    "prettier": "3.9.10"
+  }
+}

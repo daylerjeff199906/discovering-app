@@ -1,0 +1,51 @@
+# Servidor SSR (React Router) de Por aquí. Contexto de construcción: la RAÍZ del repositorio.
+#   docker build -f infra/Dockerfile.web -t poraqui-web .
+# Las variables VITE_* se fijan en la CONSTRUCCIÓN (son públicas): --build-arg VITE_MAP_TILES_URL=…
+FROM node:24.11.0-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
+RUN corepack enable && corepack prepare pnpm@11.12.0 --activate
+WORKDIR /repo
+
+FROM base AS build
+ARG VITE_MAP_TILES_URL=""
+ARG VITE_MAP_ATTRIBUTION=""
+ARG VITE_DEMO_BANNER="false"
+ENV VITE_MAP_TILES_URL=$VITE_MAP_TILES_URL VITE_MAP_ATTRIBUTION=$VITE_MAP_ATTRIBUTION VITE_DEMO_BANNER=$VITE_DEMO_BANNER
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/config-eslint/package.json packages/config-eslint/
+COPY packages/config-typescript/package.json packages/config-typescript/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/database/package.json packages/database/
+COPY packages/ui/package.json packages/ui/
+COPY e2e/package.json e2e/
+RUN pnpm install --frozen-lockfile --filter @por-aqui/web...
+COPY packages/config-typescript packages/config-typescript
+COPY packages/contracts packages/contracts
+COPY packages/api-client packages/api-client
+COPY packages/ui packages/ui
+COPY apps/web apps/web
+RUN pnpm --filter @por-aqui/web... build
+
+FROM base AS runtime
+ENV NODE_ENV=production PORT=3000
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/config-eslint/package.json packages/config-eslint/
+COPY packages/config-typescript/package.json packages/config-typescript/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/database/package.json packages/database/
+COPY packages/ui/package.json packages/ui/
+COPY e2e/package.json e2e/
+RUN pnpm install --prod --frozen-lockfile --filter @por-aqui/web...
+COPY --from=build /repo/apps/web/build apps/web/build
+RUN chown -R node:node /repo
+USER node
+WORKDIR /repo/apps/web
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=3s --retries=5 CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["pnpm", "start"]

@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.react-router
+.turbo
+.env
+.env.local
+*.log
+coverage
+playwright-report
+test-results
+.docker-pull.log
+.docker-*.log
+.api.log

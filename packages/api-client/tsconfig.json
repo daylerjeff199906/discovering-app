@@ -1,0 +1,5 @@
+{
+  "extends": "@por-aqui/config-typescript/react.json",
+  "compilerOptions": { "types": [], "lib": ["ES2023", "DOM", "DOM.Iterable"] },
+  "include": ["src"]
+}

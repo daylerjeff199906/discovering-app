@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/build
+**/.turbo
+**/.react-router
+.git
+.env
+.env.*
+!.env.example
+e2e/test-results
+e2e/playwright-report
+docs/screenshots
+*.log

@@ -1,0 +1,19 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "e2e"
+
+# pnpm bloquea los scripts de instalación por defecto; se autorizan solo los necesarios
+# (binarios nativos de argon2/sharp/esbuild/swc y el cache de BullMQ).
+allowBuilds:
+  argon2: true
+  esbuild: true
+  sharp: true
+  "@swc/core": true
+  msgpackr-extract: true
+  "@scarf/scarf": false
+
+
+# Una sola versión de Vite en todo el monorepo (8.3.5 es demasiado reciente para la política de edad mínima).
+overrides:
+  vite: 8.3.4

@@ -1,0 +1,5 @@
+{
+  "extends": "@por-aqui/config-typescript/react.json",
+  "compilerOptions": { "types": [] },
+  "include": ["src", "vitest.config.ts", "vitest.setup.ts"]
+}

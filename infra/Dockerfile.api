@@ -1,0 +1,53 @@
+# API + worker de Por aquí (mismo código, distinto comando). Contexto de construcción: la RAÍZ del repositorio.
+#   docker build -f infra/Dockerfile.api -t poraqui-api .
+#   API:    docker run … poraqui-api                      (node dist/main.js)
+#   Worker: docker run … poraqui-api node dist/worker.js
+# Versiones fijadas (sin tags flotantes).
+FROM node:24.11.0-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
+RUN corepack enable && corepack prepare pnpm@11.12.0 --activate
+WORKDIR /repo
+
+# ── build: instala todo y compila contratos, base de datos y API ─────────────
+FROM base AS build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/config-eslint/package.json packages/config-eslint/
+COPY packages/config-typescript/package.json packages/config-typescript/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/database/package.json packages/database/
+COPY packages/ui/package.json packages/ui/
+COPY e2e/package.json e2e/
+RUN pnpm install --frozen-lockfile --filter @por-aqui/api...
+COPY packages/config-typescript packages/config-typescript
+COPY packages/contracts packages/contracts
+COPY packages/database packages/database
+COPY apps/api apps/api
+RUN pnpm --filter @por-aqui/api... build
+
+# ── runtime: solo dependencias de producción + artefactos compilados ─────────
+FROM base AS runtime
+ENV NODE_ENV=production
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/config-eslint/package.json packages/config-eslint/
+COPY packages/config-typescript/package.json packages/config-typescript/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/database/package.json packages/database/
+COPY packages/ui/package.json packages/ui/
+COPY e2e/package.json e2e/
+RUN pnpm install --prod --frozen-lockfile --filter @por-aqui/api...
+COPY --from=build /repo/packages/contracts/dist packages/contracts/dist
+COPY --from=build /repo/packages/database/dist packages/database/dist
+COPY --from=build /repo/packages/database/migrations packages/database/migrations
+COPY --from=build /repo/apps/api/dist apps/api/dist
+RUN chown -R node:node /repo
+USER node
+WORKDIR /repo/apps/api
+EXPOSE 4000
+HEALTHCHECK --interval=15s --timeout=3s --retries=5 CMD node -e "fetch('http://127.0.0.1:4000/api/v1/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/main.js"]

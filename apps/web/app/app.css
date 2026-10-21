@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "@por-aqui/ui/tokens.css";
+@source "../../../packages/ui/src";
+
+@layer base {
+  /* Los enlaces dentro de texto se distinguen por subrayado (no solo por color); los botones/nav lo quitan con no-underline. */
+  a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  /* Los mapas y el contenido editorial nunca desbordan en 360px */
+  img,
+  video,
+  svg {
+    max-width: 100%;
+  }
+}
+
+.maplibregl-map {
+  font-family: var(--font-sans);
+}

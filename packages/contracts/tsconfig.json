@@ -1,0 +1,5 @@
+{
+  "extends": "@por-aqui/config-typescript/base.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "noEmit": true, "lib": ["ES2023"] },
+  "include": ["src"]
+}

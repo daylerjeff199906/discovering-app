@@ -1,0 +1,50 @@
+# Despliegue de referencia (UN solo host). Sustituye PostgreSQL/Redis/S3/SMTP por servicios gestionados si los tienes.
+# Uso:
+#   docker compose -f infra/compose.yaml -f infra/compose.prod.yaml --env-file .env.production up -d --build
+#   (las migraciones corren UNA vez por release en el servicio `migrate`, no en cada réplica)
+# Requiere .env.production con APP_ENV=production, COOKIE_SECURE=true, SITE_ADDRESS=tu.dominio, TRUST_PROXY=true,
+# APP_ENCRYPTION_KEY propia, DATABASE_URL=postgres://…@postgres:5432/…, REDIS_URL=redis://redis:6379, S3_ENDPOINT=http://minio:9000, …
+name: por-aqui-prod
+
+services:
+  migrate:
+    build: { context: .., dockerfile: infra/Dockerfile.api }
+    command: ["node", "-e", "require('@por-aqui/database').runMigrations(process.env.DATABASE_URL).then(()=>console.log('migraciones aplicadas')).catch((e)=>{console.error(e);process.exit(1)})"]
+    env_file: ../.env.production
+    depends_on: { postgres: { condition: service_healthy } }
+    restart: "no"
+
+  api:
+    build: { context: .., dockerfile: infra/Dockerfile.api }
+    env_file: ../.env.production
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_healthy } }
+    restart: unless-stopped
+
+  worker:
+    build: { context: .., dockerfile: infra/Dockerfile.api }
+    command: ["node", "dist/worker.js"]
+    env_file: ../.env.production
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_healthy } }
+    restart: unless-stopped
+
+  web:
+    build: { context: .., dockerfile: infra/Dockerfile.web }
+    environment:
+      API_INTERNAL_URL: http://api:4000
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
+    depends_on: [api]
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web, api]
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

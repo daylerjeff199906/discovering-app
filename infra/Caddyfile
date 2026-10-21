@@ -1,0 +1,20 @@
+# Proxy inverso de producción: UN origen público.
+#   /api/*  → Nest (API)        el resto → servidor SSR de React Router
+# Caddy obtiene el certificado TLS automáticamente (cambia el dominio).
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
