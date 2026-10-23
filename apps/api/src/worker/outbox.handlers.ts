@@ -5,6 +5,7 @@ import { decryptJson } from "../common/crypto";
 import { ENV, type Env } from "../config/env";
 import { MailerPort, accountExistsMessage, resetPasswordMessage, verifyEmailMessage } from "../infrastructure/mail/mailer";
 import { TOPIC_QUEUE, type OutboxTopic } from "../infrastructure/outbox.service";
+import { userRoot } from "../infrastructure/storage/keys";
 import { StoragePort } from "../infrastructure/storage/storage";
 import { DB, QUEUES, type QueueMap } from "../infrastructure/tokens";
 import { MediaService } from "../modules/media/media.service";
@@ -62,6 +63,7 @@ export class OutboxHandlers {
           break;
         case "MEDIA_DELETE":
           await this.storage.deleteMany((payload.keys as string[]) ?? []);
+          for (const prefix of (payload.prefixes as string[]) ?? []) await this.storage.deletePrefix(prefix);
           break;
         case "ACCOUNT_PURGE":
           await this.purgeAccount(String(payload.userId));
@@ -92,10 +94,11 @@ export class OutboxHandlers {
     return n;
   }
 
-  /** Purga de cuenta: objetos del almacenamiento y luego datos propios (las FK en cascada hacen el resto). */
+  /** Purga de cuenta: la carpeta del perfil en R2 y luego los datos propios (las FK en cascada hacen el resto). */
   private async purgeAccount(userId: string): Promise<void> {
     const assets = await this.db.select({ o: mediaAssets.originalKey, t: mediaAssets.thumbnailKey, d: mediaAssets.displayKey }).from(mediaAssets).where(eq(mediaAssets.ownerId, userId));
-    await this.storage.deleteMany(assets.flatMap((a) => [a.o, a.t, a.d]).filter((k): k is string => Boolean(k)));
+    await this.storage.deleteMany(assets.flatMap((a) => [a.o, a.t, a.d]).filter((k): k is string => Boolean(k))); // claves anteriores a la estructura por perfil
+    await this.storage.deletePrefix(userRoot(userId));
     await this.db.delete(users).where(and(eq(users.id, userId), eq(users.accountStatus, "DELETION_PENDING")));
   }
 }

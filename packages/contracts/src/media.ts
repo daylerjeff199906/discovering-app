@@ -26,9 +26,10 @@ export type CreateUploadInput = z.infer<typeof createUploadInputSchema>;
 
 export const uploadAuthorizationSchema = z.object({
   assetId: uuidSchema,
-  method: z.literal("POST"),
+  method: z.literal("PUT"),
   url: z.string(),
-  fields: z.record(z.string(), z.string()),
+  /** Encabezados firmados que el navegador debe enviar en el PUT. */
+  headers: z.record(z.string(), z.string()),
   expiresAt: z.string(),
 });
 export type UploadAuthorization = z.infer<typeof uploadAuthorizationSchema>;

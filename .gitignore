@@ -12,3 +12,4 @@ test-results
 .docker-pull.log
 .docker-*.log
 .api.log
+.dev-mail

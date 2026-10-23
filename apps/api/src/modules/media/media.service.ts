@@ -9,6 +9,7 @@ import type { AuthUser } from "../../common/decorators";
 import { AppError, badRequest, notFound } from "../../common/errors";
 import { ENV, type Env } from "../../config/env";
 import { OutboxService } from "../../infrastructure/outbox.service";
+import { assetIdOfKey, assetPrefix, derivedKey, originalKey, prefixOfOriginal, USERS_ROOT, type MediaFolder } from "../../infrastructure/storage/keys";
 import { StoragePort } from "../../infrastructure/storage/storage";
 import { DB } from "../../infrastructure/tokens";
 import { assetToDto } from "./media.mapper";
@@ -35,9 +36,16 @@ export class MediaService {
     }
     if (!(ACCEPTED_IMAGE_TYPES as readonly string[]).includes(input.mimeType)) throw new AppError(400, ERROR_CODES.UNSUPPORTED_MEDIA, "Formato no admitido. Usa JPEG, PNG o WebP.");
 
+    // Carpeta del perfil según el tipo: avatar, o el lugar de la visita.
+    let folder: MediaFolder = { kind: "avatar" };
+    if (visitId) {
+      const [visit] = await this.db.select({ placeId: visits.placeId }).from(visits).where(and(eq(visits.id, visitId), eq(visits.ownerId, user.id)));
+      if (!visit) throw notFound("No encontramos esa visita.");
+      folder = { kind: "place", placeId: visit.placeId };
+    }
     const id = randomUUID();
-    const key = `originals/${user.id}/${id}`;
-    const post = await this.storage.createUploadPost(key, input.mimeType, this.env.MEDIA_MAX_BYTES, this.env.UPLOAD_URL_TTL_SECONDS);
+    const key = originalKey(assetPrefix(user.id, folder, id));
+    const target = await this.storage.createUploadUrl(key, input.mimeType, input.sizeBytes, this.env.UPLOAD_URL_TTL_SECONDS);
 
     const asset = await this.db.transaction(async (tx) => {
       const [{ n: total }] = (await tx.select({ n: sql<number>`count(*)::int` }).from(mediaAssets).where(eq(mediaAssets.ownerId, user.id))) as [{ n: number }];
@@ -54,16 +62,16 @@ export class MediaService {
         if (n >= this.env.MEDIA_MAX_PER_VISIT) throw new AppError(400, ERROR_CODES.MEDIA_LIMIT, `Cada visita admite hasta ${this.env.MEDIA_MAX_PER_VISIT} fotos.`);
         const [row] = await tx
           .insert(mediaAssets)
-          .values({ id, ownerId: user.id, purpose, originalKey: key, mimeClaimed: input.mimeType, uploadExpiresAt: post.expiresAt })
+          .values({ id, ownerId: user.id, purpose, originalKey: key, mimeClaimed: input.mimeType, uploadExpiresAt: target.expiresAt })
           .returning();
         const [{ pos }] = (await tx.select({ pos: sql<number>`coalesce(max(${visitMedia.position}), -1)::int + 1` }).from(visitMedia).where(eq(visitMedia.visitId, visitId))) as [{ pos: number }];
         await tx.insert(visitMedia).values({ visitId, assetId: id, ownerId: user.id, position: Math.max(pos, max + 1) });
         return row!;
       }
-      const [row] = await tx.insert(mediaAssets).values({ id, ownerId: user.id, purpose, originalKey: key, mimeClaimed: input.mimeType, uploadExpiresAt: post.expiresAt }).returning();
+      const [row] = await tx.insert(mediaAssets).values({ id, ownerId: user.id, purpose, originalKey: key, mimeClaimed: input.mimeType, uploadExpiresAt: target.expiresAt }).returning();
       return row!;
     });
-    return { asset, auth: { assetId: asset.id, method: "POST", url: post.url, fields: post.fields, expiresAt: post.expiresAt.toISOString() } };
+    return { asset, auth: { assetId: asset.id, method: target.method, url: target.url, headers: target.headers, expiresAt: target.expiresAt.toISOString() } };
   }
 
   async reserveVisitUpload(user: AuthUser, visitId: string, input: CreateUploadInput) {
@@ -157,8 +165,10 @@ export class MediaService {
     if (rows.length === 0) return;
     await tx.update(profiles).set({ avatarAssetId: null }).where(inArray(profiles.avatarAssetId, assetIds));
     await tx.delete(mediaAssets).where(inArray(mediaAssets.id, rows.map((r) => r.id)));
+    // Se borra la carpeta entera del archivo (original + todas las versiones) y, por si acaso, cada clave conocida.
     const keys = rows.flatMap((r) => [r.originalKey, r.thumbnailKey, r.displayKey].filter((k): k is string => Boolean(k)));
-    await this.outbox.add(tx, "MEDIA_DELETE", null, { keys });
+    const prefixes = rows.map((r) => prefixOfOriginal(r.originalKey)).filter((p): p is string => Boolean(p)).map((p) => `${p}/`);
+    await this.outbox.add(tx, "MEDIA_DELETE", null, { keys, prefixes });
   }
 
   async deleteVisitAssets(tx: DbExecutor, userId: string, visitId: string) {
@@ -184,6 +194,29 @@ export class MediaService {
       .limit(limit);
     for (const r of rows) await this.db.transaction((tx) => this.deleteAssets(tx, r.ownerId, [r.id]));
     return rows.length;
+  }
+
+  /**
+   * Red de seguridad: borra de R2 los objetos de `users/…` cuya fila ya no existe en la base de datos
+   * (borrados a mano, restauraciones, eventos perdidos). Ignora lo de la última hora para no pisar subidas en curso.
+   */
+  async reconcileStorage(maxObjects = 50_000): Promise<number> {
+    const cutoff = Date.now() - 3_600_000;
+    const byAsset = new Map<string, string[]>();
+    for (const o of await this.storage.list(USERS_ROOT, maxObjects)) {
+      const id = assetIdOfKey(o.key);
+      if (!id || o.lastModified.getTime() > cutoff) continue;
+      byAsset.set(id, [...(byAsset.get(id) ?? []), o.key]);
+    }
+    const ids = [...byAsset.keys()];
+    const known = new Set<string>();
+    for (let i = 0; i < ids.length; i += 500) {
+      const rows = await this.db.select({ id: mediaAssets.id }).from(mediaAssets).where(inArray(mediaAssets.id, ids.slice(i, i + 500)));
+      for (const r of rows) known.add(r.id);
+    }
+    const orphans = ids.filter((id) => !known.has(id)).flatMap((id) => byAsset.get(id)!);
+    await this.storage.deleteMany(orphans);
+    return orphans.length;
   }
 
   /* ───────────── Procesamiento (worker) ───────────── */
@@ -236,8 +269,9 @@ export class MediaService {
       const display = await base().resize({ width: sizes.display, height: sizes.display, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true });
 
       const version = asset.derivativeVersion + 1;
-      const thumbKey = `derived/${assetId}/v${version}/thumb.webp`;
-      const displayKey = `derived/${assetId}/v${version}/display.webp`;
+      const prefix = prefixOfOriginal(asset.originalKey) ?? `derived/${assetId}`; // claves anteriores a la estructura por perfil
+      const thumbKey = derivedKey(prefix, version, "thumb");
+      const displayKey = derivedKey(prefix, version, "display");
       await this.storage.put(thumbKey, thumb, "image/webp");
       await this.storage.put(displayKey, display.data, "image/webp");
 

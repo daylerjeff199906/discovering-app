@@ -1,25 +1,25 @@
 /* Tokens de diseño de Por aquí (propuestos a partir de las referencias aprobadas; no extraídos de Figma). */
 :root {
-  --background: #f8f5ee;
-  --surface: #fffcf6;
-  --surface-muted: #f0eee5;
-  --primary: #194b35;
+  --background: #f8f5ef;
+  --surface: #fffdf8;
+  --surface-muted: #efede4;
+  --primary: #214735;
   --primary-hover: #123b29;
   --primary-foreground: #ffffff;
-  --sage: #dce6cf;
+  --sage: #e1e5d4;
   --sage-foreground: #23432d;
-  --foreground: #18372a;
-  --muted-foreground: #596359;
-  --border: #dddcd2;
-  --control-border: #7b877c;
+  --foreground: #1e3026;
+  --muted-foreground: #696d63;
+  --border: #e4e0d6;
+  --control-border: #858f80;
   --accent: #a24f36;
   --success: #246443;
   --warning: #855500;
   --danger: #b13732;
   --focus: #2c6b48;
-  --radius-control: 12px;
-  --radius-card: 18px;
-  --shadow-card: 0 1px 2px rgb(24 55 42 / 0.06), 0 4px 16px rgb(24 55 42 / 0.05);
+  --radius-control: 14px;
+  --radius-card: 22px;
+  --shadow-card: 0 4px 24px rgb(42 48 30 / 0.045);
 }
 
 @theme inline {
@@ -66,7 +66,7 @@ h1,
 h2,
 h3 {
   font-family: var(--font-serif);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.045em;
   line-height: 1.2;
 }
 

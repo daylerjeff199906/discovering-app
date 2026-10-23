@@ -67,7 +67,7 @@ export function ProposalDialog({ open, onClose, journey, onApplied, onConflict }
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <Field label="Destino" required hint="Debe existir en el catálogo (p. ej. Iquitos, Cusco, Lisboa).">{(c) => <Input {...c} value={destination} onChange={(e) => setDestination(e.target.value)} />}</Field>
+          <Field label="Destino" required hint="El catálogo actual está centrado en Iquitos.">{(c) => <Input {...c} value={destination} onChange={(e) => setDestination(e.target.value)} />}</Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Días">{(c) => <Input {...c} type="number" min={1} max={14} value={days} onChange={(e) => setDays(Math.min(14, Math.max(1, Number(e.target.value) || 1)))} />}</Field>
             <Field label="Minutos por día">{(c) => <Input {...c} type="number" min={60} max={1440} step={30} value={minutes} onChange={(e) => setMinutes(Number(e.target.value) || 480)} />}</Field>
@@ -89,7 +89,7 @@ export function ProposalDialog({ open, onClose, journey, onApplied, onConflict }
           </fieldset>
           {hasStops ? <Alert tone="warning">Aplicar una propuesta reemplaza tus días y paradas actuales (las visitas que ya registraste se conservan).</Alert> : null}
           {generate.isError ? <Alert tone="danger" live="assertive">{errorMessage(generate.error)}</Alert> : null}
-          <Badge tone="neutral">Sin IA: el orden se calcula con una heurística explicable.</Badge>
+          <Badge tone="neutral">Una propuesta para orientarte. Puedes cambiar las paradas y su orden antes de salir.</Badge>
         </div>
       )}
     </Dialog>

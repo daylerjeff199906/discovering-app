@@ -23,7 +23,7 @@ const registration = (username: string, email: string, password = "claveSegura12
 });
 
 describe("Cuenta → correo → verificar → login → logout → reset", () => {
-  it("recorre el ciclo completo con correo real (Mailpit) y revoca sesiones tras el reset", async () => {
+  it("recorre el ciclo completo con el correo enviado y revoca sesiones tras el reset", async () => {
     const username = uniq("flow_");
     const email = `${username}@example.com`;
     const c = t.client();

@@ -24,6 +24,7 @@ export function placeSnapshot(row: PlaceRow): PlaceSnapshot {
 }
 
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
+const enabledCatalogPlace = sql`NOT EXISTS (SELECT 1 FROM catalog_content cc, jsonb_array_elements(cc.data->'places') p WHERE cc.key = 'travel' AND p->>'id' = ${places.id}::text AND (p->>'enabled' = 'false' OR EXISTS (SELECT 1 FROM jsonb_array_elements(cc.data->'cities') c WHERE c->>'id' = p->>'cityId' AND c->>'enabled' = 'false')))`;
 
 /** Condición de acceso: catálogo o lugar personal propio. */
 export const accessiblePlace = (userId: string): SQL => or(eq(places.scope, "CATALOG"), and(eq(places.scope, "PERSONAL"), eq(places.ownerId, userId)))!;
@@ -63,6 +64,7 @@ export class PlacesService {
 
   async search(user: AuthUser | undefined, q: PlaceSearchQuery): Promise<PlaceDto[]> {
     const conds: SQL[] = [];
+    conds.push(enabledCatalogPlace);
     if (q.scope === "catalog" || !user) conds.push(eq(places.scope, "CATALOG"));
     else if (q.scope === "mine") conds.push(and(eq(places.scope, "PERSONAL"), eq(places.ownerId, user.id))!);
     else conds.push(accessiblePlace(user.id));
@@ -104,6 +106,7 @@ export class PlacesService {
              avg(ST_X(location)) AS lng, avg(ST_Y(location)) AS lat
       FROM places
       WHERE scope = 'CATALOG' AND locality IS NOT NULL
+        AND ${enabledCatalogPlace}
         ${like ? sql`AND unaccent(locality) ILIKE unaccent(${like})` : sql``}
       GROUP BY locality, region, country_code
       ORDER BY count(*) DESC, locality

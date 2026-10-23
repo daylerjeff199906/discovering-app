@@ -1,7 +1,7 @@
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import type { JourneyPreferences } from "@por-aqui/contracts";
 import { Alert, Button, Card, EmptyState, JourneyTrail, buttonClass, type TrailItem } from "@por-aqui/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2, Wand2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
@@ -68,7 +68,6 @@ export default function EditarViaje() {
   const removeDay = useJourneyMutation(id, (dayId: string, j) => api.journeys.deleteDay(id, dayId, j.version), { onConflict });
   const reorder = useJourneyMutation(id, (layout: ReturnType<typeof layoutOf>, j) => api.journeys.reorder(id, { layout, expectedVersion: j.version }), { onConflict });
 
-  const startRecording = useMutation({ mutationFn: () => api.recording.start(id), onSuccess: async () => { await qc.invalidateQueries({ queryKey: qk.journey(id) }); navigate(`/app/viajes/${id}/recorrido`); } });
 
   /* ───────── Tramos: se recalculan solo si hay proveedor (debounce) ───────── */
   const recalcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,7 +169,7 @@ export default function EditarViaje() {
           <>
             <Link to={`/app/viajes/${id}`} className={buttonClass({ variant: "ghost" })}>Ver resumen</Link>
             <Button variant="outline" loading={update.isPending} disabled={locked || j.planStatus === "READY"} onClick={() => update.mutate({ planStatus: "READY" })}>{j.planStatus === "READY" ? "Plan guardado ✓" : "Guardar plan"}</Button>
-            {j.status === "COMPLETED" ? null : <Button loading={startRecording.isPending} disabled={locked} onClick={() => startRecording.mutate()}>{j.recording ? "Continuar recorrido" : "Iniciar recorrido"}</Button>}
+            {j.status === "COMPLETED" ? null : <Button disabled={locked} onClick={() => navigate(`/app/viajes/${id}/recorrido`)}>{j.recording ? "Continuar recorrido" : "Iniciar recorrido"}</Button>}
           </>
         }
       />
@@ -205,14 +204,14 @@ export default function EditarViaje() {
                   actions: locked ? undefined : (
                     <>
                       <DragHandle id={s.id} label={s.place.name} />
-                      <Button size="sm" variant="outline" aria-label={`Subir ${s.place.name}`} onClick={() => shift(s.id, -1, s.place.name)}><ArrowUp className="size-4" aria-hidden="true" /> Subir</Button>
-                      <Button size="sm" variant="outline" aria-label={`Bajar ${s.place.name}`} onClick={() => shift(s.id, 1, s.place.name)}><ArrowDown className="size-4" aria-hidden="true" /> Bajar</Button>
+                      <Button size="icon" variant="outline" title="Subir parada" aria-label={`Subir ${s.place.name}`} onClick={() => shift(s.id, -1, s.place.name)}><ArrowUp className="size-4" aria-hidden="true" /></Button>
+                      <Button size="icon" variant="outline" title="Bajar parada" aria-label={`Bajar ${s.place.name}`} onClick={() => shift(s.id, 1, s.place.name)}><ArrowDown className="size-4" aria-hidden="true" /></Button>
                       <label className="flex items-center gap-1.5 text-sm">
                         <span className="text-muted-foreground">Visita</span>
                         <input aria-label={`Minutos de visita en ${s.place.name}`} type="number" min={1} max={1440} defaultValue={s.visitDurationSeconds ? Math.round(s.visitDurationSeconds / 60) : ""} placeholder="—" onBlur={(e) => { const v = e.target.value ? Number(e.target.value) * 60 : null; if (v !== s.visitDurationSeconds) setDuration.mutate({ stopId: s.id, seconds: v }, { onSuccess: scheduleRecalc }); }} className="h-10 w-20 rounded-control border border-control-border bg-surface px-2" />
                         <span className="text-muted-foreground">min</span>
                       </label>
-                      <Button size="sm" variant="ghost" aria-label={`Quitar ${s.place.name}`} onClick={() => removeStop.mutate(s.id, { onSuccess: scheduleRecalc })}><Trash2 className="size-4" aria-hidden="true" /> Quitar</Button>
+                      <Button size="icon" variant="ghost" title="Quitar parada" aria-label={`Quitar ${s.place.name}`} onClick={() => removeStop.mutate(s.id, { onSuccess: scheduleRecalc })}><Trash2 className="size-4" aria-hidden="true" /></Button>
                     </>
                   ),
                 }));

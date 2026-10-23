@@ -1,132 +1,62 @@
 import type { PlaceDto } from "@por-aqui/contracts";
-import { Alert, Button, Dialog, EmptyState, Field, Input, Tabs } from "@por-aqui/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { MapPin, Plus } from "lucide-react";
+import { Alert, Button, Dialog, Field, Input, Tabs } from "@por-aqui/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bookmark, MapPin, Plus } from "lucide-react";
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
+import { useTravelCatalog } from "../lib/catalog";
 import { capabilitiesQuery } from "../lib/query";
 import { MapPanel } from "./map";
 
-/**
- * Añadir una parada: buscar en el catálogo/lugares propios, o crear un lugar personal (privado)
- * eligiendo un punto en el mapa. En móvil se muestra como hoja inferior.
- */
 export function AddStopDialog({ open, onClose, near, destinationLabel, onPick, busy }: { open: boolean; onClose: () => void; near?: { lng: number; lat: number } | null; destinationLabel?: string; onPick: (placeId: string) => Promise<unknown>; busy?: boolean }) {
-  const [tab, setTab] = useState("search");
+  const qc = useQueryClient();
+  const catalog = useTravelCatalog();
+  const [tab, setTab] = useState("near");
   const [q, setQ] = useState("");
   const [submitted, setSubmitted] = useState("");
+  const [personalOpen, setPersonalOpen] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [pickError, setPickError] = useState("");
   const caps = useQuery(capabilitiesQuery());
-
-  const search = useQuery({
-    queryKey: ["place-search", submitted, destinationLabel, near],
-    queryFn: ({ signal }) => api.places.search({ q: submitted || undefined, locality: !submitted ? destinationLabel?.split(",")[0]?.trim() : undefined, scope: "all", limit: 20 }, { signal }),
-    enabled: open && tab === "search",
-  });
-
+  const search = useQuery({ queryKey: ["place-search", submitted, destinationLabel, near], queryFn: ({ signal }) => api.places.search({ q: submitted || undefined, locality: destinationLabel?.split(",")[0]?.trim(), lng: near?.lng, lat: near?.lat, scope: "all", limit: 30 }, { signal }), enabled: open && tab === "near" });
+  const saved = useQuery({ queryKey: ["saved-places"], queryFn: ({ signal }) => api.catalog.savedPlaces({ signal }), enabled: open });
+  const bookmark = useMutation({ mutationFn: (p: PlaceDto) => saved.data?.some((v) => v.id === p.id) ? api.catalog.unsavePlace(p.id) : api.catalog.savePlace(p.id), onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-places"] }) });
   const [name, setName] = useState("");
   const [point, setPoint] = useState<{ lng: number; lat: number } | null>(null);
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
-  const create = useMutation({
-    mutationFn: () => api.places.create({ name: name.trim(), lng: point!.lng, lat: point!.lat }),
-    onSuccess: async (p) => {
-      await onPick(p.id);
-      setName("");
-      setPoint(null);
-      setLat("");
-      setLng("");
-      onClose();
-    },
-  });
-  const setFromInputs = (nlng: string, nlat: string) => {
-    setLng(nlng);
-    setLat(nlat);
-    const a = Number(nlng);
-    const b = Number(nlat);
-    if (nlng !== "" && nlat !== "" && Math.abs(a) <= 180 && Math.abs(b) <= 90) setPoint({ lng: a, lat: b });
-  };
-
   const [geo, setGeo] = useState("");
-  const geocode = useQuery({ queryKey: ["geocode", geo], queryFn: ({ signal }) => api.places.geocode(geo, { signal }), enabled: Boolean(geo) && Boolean(caps.data?.geocoder.available) });
-
-  return (
-    <Dialog open={open} onClose={onClose} variant="sheet" title="Añadir una parada" description="Busca un lugar del catálogo o crea uno personal (privado por defecto).">
-      <div className="flex flex-col gap-4">
-        <Tabs label="Cómo añadir" value={tab} onChange={setTab} tabs={[{ id: "search", label: "Buscar lugar" }, { id: "personal", label: "Lugar personal" }]} />
-        {tab === "search" ? (
-          <div className="flex flex-col gap-3">
-            <form className="flex gap-2" role="search" onSubmit={(e) => { e.preventDefault(); setSubmitted(q.trim()); }}>
-              <Input aria-label="Buscar lugar" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Plaza, museo, mercado…" type="search" />
-              <Button type="submit" variant="secondary">Buscar</Button>
-            </form>
-            {search.isPending ? <p role="status" className="text-sm text-muted-foreground">Buscando…</p> : null}
-            {search.isError ? <Alert tone="danger" live="assertive">{errorMessage(search.error)}</Alert> : null}
-            {search.data && search.data.length === 0 ? (
-              <EmptyState title="No encontramos lugares">Prueba con otra palabra o crea un lugar personal en la otra pestaña.</EmptyState>
-            ) : (
-              <ul className="m-0 flex max-h-80 list-none flex-col gap-2 overflow-y-auto p-0">
-                {search.data?.map((p) => (
-                  <PlaceRow key={p.id} place={p} busy={busy} onPick={async () => { await onPick(p.id); onClose(); }} />
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <Field label="Nombre del lugar" required>{(c) => <Input {...c} value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Mi mirador favorito" />}</Field>
-            {caps.data?.geocoder.available ? (
-              <Field label="Buscar dirección (opcional)">
-                {(c) => (
-                  <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); setGeo((e.currentTarget.elements.namedItem("g") as HTMLInputElement).value); }}>
-                    <Input {...c} name="g" />
-                    <Button type="submit" variant="secondary">Buscar</Button>
-                  </form>
-                )}
-              </Field>
-            ) : null}
-            {geocode.data?.results.length ? (
-              <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
-                {geocode.data.results.map((r) => <li key={r.label}><button type="button" className="text-left underline" onClick={() => { setPoint({ lng: r.lng, lat: r.lat }); setLng(String(r.lng)); setLat(String(r.lat)); }}>{r.label}</button></li>)}
-              </ul>
-            ) : null}
-            <p className="text-sm font-semibold">Toca el mapa para elegir el punto</p>
-            <MapPanel
-              className="h-64"
-              ariaLabel="Mapa para elegir la ubicación del lugar"
-              markers={point ? [{ id: "nuevo", lng: point.lng, lat: point.lat, state: "current", label: "Lugar nuevo" }] : near ? [] : []}
-              onMapClick={(p) => { setPoint(p); setLng(p.lng.toFixed(6)); setLat(p.lat.toFixed(6)); }}
-              fitKey={point ? "p" : "n"}
-              clickHint="Toca para marcar"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Longitud">{(c) => <Input {...c} inputMode="decimal" value={lng} onChange={(e) => setFromInputs(e.target.value, lat)} />}</Field>
-              <Field label="Latitud">{(c) => <Input {...c} inputMode="decimal" value={lat} onChange={(e) => setFromInputs(lng, e.target.value)} />}</Field>
-            </div>
-            {create.isError ? <Alert tone="danger" live="assertive">{errorMessage(create.error)}</Alert> : null}
-            <Button disabled={!name.trim() || !point} loading={create.isPending || busy} onClick={() => create.mutate()}>
-              <MapPin className="size-5" aria-hidden="true" /> Crear lugar y añadir
-            </Button>
-          </div>
-        )}
-      </div>
-    </Dialog>
-  );
-}
-
-function PlaceRow({ place, onPick, busy }: { place: PlaceDto; onPick: () => Promise<void>; busy?: boolean }) {
-  const [loading, setLoading] = useState(false);
-  return (
-    <li className="flex items-center justify-between gap-3 rounded-control border border-border bg-surface p-3">
-      <div className="min-w-0">
-        <p className="truncate font-semibold">{place.name}</p>
-        <p className="truncate text-sm text-muted-foreground">
-          {[place.locality, place.countryCode].filter(Boolean).join(", ") || "Sin ubicación descrita"}
-          {place.scope === "PERSONAL" ? " · personal" : ""}
-        </p>
-      </div>
-      <Button size="sm" variant="secondary" loading={loading || busy} onClick={async () => { setLoading(true); try { await onPick(); } finally { setLoading(false); } }} aria-label={`Añadir ${place.name}`}>
-        <Plus className="size-4" aria-hidden="true" /> Añadir
-      </Button>
-    </li>
-  );
+  const geocode = useQuery({ queryKey: ["geocode", geo], queryFn: ({ signal }) => api.places.geocode(geo, { signal }), enabled: open && Boolean(geo) && Boolean(caps.data?.geocoder.available) });
+  const create = useMutation({ mutationFn: () => api.places.create({ name: name.trim(), lng: point!.lng, lat: point!.lat, locality: destinationLabel?.split(",")[0]?.trim() }), onSuccess: async (p) => { await onPick(p.id); setName(""); setPoint(null); setLat(""); setLng(""); onClose(); } });
+  const setFromInputs = (a: string, b: string) => { setLng(a); setLat(b); if (a !== "" && b !== "" && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a)) <= 180 && Math.abs(Number(b)) <= 90) setPoint({ lng: Number(a), lat: Number(b) }); else setPoint(null); };
+  const pick = async (id: string) => { setPickError(""); setLoadingId(id); try { await onPick(id); onClose(); } catch (e) { setPickError(errorMessage(e)); } finally { setLoadingId(null); } };
+  const rows = tab === "near" ? search.data : saved.data?.filter((p) => !q.trim() || p.name.toLowerCase().includes(q.toLowerCase()));
+  const pending = tab === "near" ? search.isPending : saved.isPending;
+  return <Dialog open={open} onClose={onClose} variant="sheet" title="Añadir una parada" className="add-stop-editor">
+    <div className="grid gap-4">
+      <form className="flex gap-2" role="search" onSubmit={(e) => { e.preventDefault(); setSubmitted(q.trim()); }}><Input aria-label="Buscar un lugar para añadir" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca un lugar" type="search" /><Button type="submit" variant="outline" size="sm">Buscar</Button></form>
+      <p className="text-xs text-muted-foreground">Ej. museo, malecón, mercado, naturaleza…</p>
+      <Tabs label="Lugares sugeridos" value={tab} onChange={setTab} tabs={[{ id: "near", label: <span className="inline-flex items-center gap-2"><MapPin size={17} />Cercanos</span> }, { id: "saved", label: <span className="inline-flex items-center gap-2"><Bookmark size={17} />Guardados</span> }]} />
+      {pending ? <p role="status" className="text-sm text-muted-foreground">Cargando lugares…</p> : null}
+      {search.isError && tab === "near" || saved.isError && tab === "saved" ? <Alert tone="danger">{errorMessage(tab === "near" ? search.error : saved.error)}</Alert> : null}
+      {rows?.length === 0 ? <p className="text-sm text-muted-foreground">{tab === "saved" ? "Aún no guardaste lugares. Usa el marcador de un lugar para tenerlo aquí." : "No hay resultados. Prueba otra búsqueda o crea un lugar personal."}</p> : null}
+      <ul className="suggested-stop-list">{rows?.map((p) => { const visual = catalog.data?.places.find((v) => v.id === p.id); const marked = saved.data?.some((v) => v.id === p.id); return <li key={p.id}>
+        {visual ? <img src={visual.imageUrl} alt="" width={120} height={125} /> : <div className="place-thumb-placeholder"><MapPin aria-hidden="true" /></div>}
+        <div><h3>{p.name}</h3><small>{visual?.category ?? "Lugar personal"}{p.distanceM !== null ? ` · ${Math.round(p.distanceM)} m` : ""}</small><p>{visual?.description ?? p.description ?? p.locality}</p></div>
+        <div className="suggested-stop-actions"><Button size="icon" variant="primary" title={`Añadir ${p.name}`} aria-label={`Añadir ${p.name}`} loading={loadingId === p.id} disabled={busy || Boolean(loadingId)} onClick={() => void pick(p.id)}><Plus size={19} aria-hidden="true" /></Button><Button size="icon" variant="ghost" aria-pressed={Boolean(marked)} title={marked ? "Quitar de guardados" : "Guardar lugar"} aria-label={`${marked ? 'Quitar de guardados' : 'Guardar'} ${p.name}`} disabled={bookmark.isPending} onClick={() => bookmark.mutate(p)}><Bookmark size={17} fill={marked ? "currentColor" : "none"} aria-hidden="true" /></Button></div>
+      </li>; })}</ul>
+      {pickError || bookmark.isError ? <Alert tone="danger" live="assertive">{pickError || errorMessage(bookmark.error)}</Alert> : null}
+      <details open={personalOpen} onToggle={(e) => setPersonalOpen(e.currentTarget.open)} className="create-stop-panel"><summary><MapPin size={18} aria-hidden="true" /> Crear lugar nuevo</summary><div className="grid gap-3 mt-3">
+        <Field label="Nombre del lugar" required>{(c) => <Input {...c} value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ej. Mi rincón junto al río" />}</Field>
+        {caps.data?.geocoder.available ? <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); setGeo((e.currentTarget.elements.namedItem('address') as HTMLInputElement).value); }}><Input name="address" aria-label="Buscar dirección" /><Button type="submit" variant="outline">Buscar</Button></form> : null}
+        {geocode.data?.results.map((r) => <button key={r.label} type="button" className="text-left underline" onClick={() => { setPoint({ lng: r.lng, lat: r.lat }); setLng(String(r.lng)); setLat(String(r.lat)); }}>{r.label}</button>)}
+        <p className="text-sm">Elegir ubicación en el mapa</p>
+        <MapPanel className="h-52" ariaLabel="Mapa para crear una parada" markers={point ? [{ id: "nuevo", ...point, state: "current", label: name || "Lugar nuevo" }] : near ? [{ id: "cerca", ...near, label: "Referencia del recorrido" }] : []} fitKey={point ? `${point.lng}:${point.lat}` : "near"} onMapClick={(p) => { setPoint(p); setLng(p.lng.toFixed(6)); setLat(p.lat.toFixed(6)); }} clickHint="Toca para marcar" />
+        <div className="grid grid-cols-2 gap-3"><Field label="Longitud">{(c) => <Input {...c} inputMode="decimal" value={lng} onChange={(e) => setFromInputs(e.target.value, lat)} />}</Field><Field label="Latitud">{(c) => <Input {...c} inputMode="decimal" value={lat} onChange={(e) => setFromInputs(lng, e.target.value)} />}</Field></div>
+        <p className="text-xs text-muted-foreground">Este lugar será personal y privado.</p>
+        {create.isError ? <Alert tone="danger" live="assertive">{errorMessage(create.error)}</Alert> : null}
+        <Button disabled={!name.trim() || !point} loading={create.isPending || busy} onClick={() => create.mutate()}>Crear lugar y añadir <Plus size={18} aria-hidden="true" /></Button>
+      </div></details>
+    </div>
+  </Dialog>;
 }

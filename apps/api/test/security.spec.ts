@@ -92,7 +92,8 @@ describe("Cabeceras, CORS y errores", () => {
 });
 
 describe("Validación del entorno", () => {
-  const base = { DATABASE_URL: "postgres://x", REDIS_URL: "redis://x", WEB_ORIGIN: "http://localhost:5173", PUBLIC_SITE_URL: "http://localhost:5173", APP_ENCRYPTION_KEY: randomBytes(32).toString("base64"), S3_ENDPOINT: "http://s3", S3_PUBLIC_ENDPOINT: "http://s3", S3_BUCKET: "b", S3_ACCESS_KEY: "k", S3_SECRET_KEY: "s" };
+  const base = { DATABASE_URL: "postgres://x", REDIS_URL: "redis://x", WEB_ORIGIN: "http://localhost:5173", PUBLIC_SITE_URL: "http://localhost:5173", APP_ENCRYPTION_KEY: randomBytes(32).toString("base64"), };
+  const cloud = { R2_ACCOUNT_ID: "acc", R2_ACCESS_KEY_ID: "k", R2_SECRET_ACCESS_KEY: "s", R2_BUCKET: "b", RESEND_API_KEY: "re_test" };
 
   it("acepta una configuración de desarrollo válida", () => {
     expect(parseEnv({}, base).API_PORT).toBe(4000);
@@ -104,7 +105,13 @@ describe("Validación del entorno", () => {
     expect(() => parseEnv({}, { ...base, APP_ENV: "production", COOKIE_SECURE: "true", ENABLE_DEMO_CONTENT: "true" })).toThrow(/demostración/);
     expect(() => parseEnv({}, { ...base, APP_ENV: "production", COOKIE_SECURE: "true", RATE_LIMIT_ENABLED: "false" })).toThrow(/límite de peticiones/);
     expect(() => parseEnv({}, { ...base, APP_ENV: "production", COOKIE_SECURE: "true", APP_ENCRYPTION_KEY: "ZGV2LW9ubHktMzItYnl0ZS1rZXktZm9yLXBvcmFxdWk=" })).toThrow(/APP_ENCRYPTION_KEY/);
-    expect(parseEnv({}, { ...base, APP_ENV: "production", COOKIE_SECURE: "true" }).COOKIE_SECURE).toBe(true);
+    expect(parseEnv({}, { ...base, ...cloud, APP_ENV: "production", COOKIE_SECURE: "true" }).COOKIE_SECURE).toBe(true);
+  });
+
+  it("en producción exige las claves de Cloudflare R2 y de Resend; en desarrollo son opcionales", () => {
+    expect(() => parseEnv({}, { ...base, APP_ENV: "production", COOKIE_SECURE: "true" })).toThrow(/R2_BUCKET/);
+    expect(() => parseEnv({}, { ...base, ...cloud, RESEND_API_KEY: "", APP_ENV: "production", COOKIE_SECURE: "true" })).toThrow(/RESEND_API_KEY/);
+    expect(parseEnv({}, base).R2_BUCKET).toBe("");
   });
 
   it("falla con un mensaje claro si falta una variable obligatoria", () => {

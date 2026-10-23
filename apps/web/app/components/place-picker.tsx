@@ -1,7 +1,8 @@
 import type { CreateVisitInput, JourneyDto } from "@por-aqui/contracts";
-import { Field, Input, Tabs } from "@por-aqui/ui";
+import { Alert, Button, Field, Input, Tabs } from "@por-aqui/ui";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { LocateFixed } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { flattenStops } from "../lib/trail";
 import { MapPanel } from "./map";
@@ -17,18 +18,61 @@ export function PlacePicker({ journey, value, onChange }: { journey: JourneyDto;
   const [name, setName] = useState("");
   const [pt, setPt] = useState<{ lng: number; lat: number } | null>(null);
   const [picked, setPicked] = useState<string>("");
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const locationRequest = useRef(0);
+  useEffect(() => () => { locationRequest.current++; }, []);
+
+  const useCurrentLocation = () => {
+    setLocationError(null);
+    if (!navigator.geolocation) {
+      setLocationError("Tu navegador no permite obtener la ubicación. Puedes elegir un lugar o marcarlo en el mapa.");
+      return;
+    }
+    const request = ++locationRequest.current;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition((position) => {
+      if (request !== locationRequest.current) return;
+      const point = { lng: position.coords.longitude, lat: position.coords.latitude };
+      const placeName = name.trim() || "Mi ubicación actual";
+      setPt(point);
+      setName(placeName);
+      setPicked(placeName);
+      setAccuracy(position.coords.accuracy);
+      setTab("new");
+      setLocating(false);
+      onChange({ newPlace: { name: placeName, ...point } }, placeName);
+    }, (error) => {
+      if (request !== locationRequest.current) return;
+      setLocating(false);
+      setLocationError(error.code === 1
+        ? "No se concedió permiso de ubicación. Puedes habilitarlo en el navegador o marcar el punto a mano."
+        : error.code === 3
+          ? "La ubicación tardó demasiado. Inténtalo de nuevo o marca el punto en el mapa."
+          : "No pudimos obtener tu ubicación. Puedes elegir un lugar o marcar el punto a mano.");
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  };
 
   const search = useQuery({ queryKey: ["place-search-visit", submitted], queryFn: ({ signal }) => api.places.search({ q: submitted || undefined, scope: "all", limit: 15, locality: !submitted ? journey.preferences.destinationLabel?.split(",")[0]?.trim() : undefined }, { signal }), enabled: tab === "search" });
 
   return (
     <div className="flex flex-col gap-3">
-      <Tabs label="Elegir lugar" value={tab} onChange={setTab} tabs={[...(stops.length ? [{ id: "plan", label: "Del plan" }] : []), { id: "search", label: "Buscar" }, { id: "new", label: "Lugar nuevo" }]} />
+      <div className="rounded-control border border-border bg-surface-muted p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><p className="font-semibold">Marcar mi ubicación (opcional)</p><p className="mt-1 text-sm text-muted-foreground">Obtén un punto para esta visita. Puedes cambiar su nombre y ajustar el marcador en el mapa.</p></div>
+          <Button variant="outline" loading={locating} onClick={useCurrentLocation}><LocateFixed size={18} aria-hidden="true" />{locating ? "Obteniendo ubicación…" : "Usar mi ubicación actual"}</Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">Solo se consulta al pulsar el botón; no activa el seguimiento del trayecto.</p>
+      </div>
+      {locationError ? <Alert tone="warning" live="assertive">{locationError}</Alert> : null}
+      <Tabs label="Elegir lugar" value={tab} onChange={(next) => { locationRequest.current++; setLocating(false); setLocationError(null); setTab(next); }} tabs={[...(stops.length ? [{ id: "plan", label: "Del plan" }] : []), { id: "search", label: "Buscar" }, { id: "new", label: "Lugar nuevo" }]} />
       {tab === "plan" ? (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {stops.map((s) => (
             <li key={s.id}>
               <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border border-border bg-surface px-3 py-2 has-[:checked]:border-primary has-[:checked]:bg-sage/40 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-focus">
-                <input type="radio" name="lugar" className="size-5 accent-[var(--primary)]" checked={value?.stopId === s.id} onChange={() => { setPicked(s.place.name); onChange({ placeId: s.placeId, stopId: s.id }, s.place.name); }} />
+                <input type="radio" name="lugar" className="size-5 accent-[var(--primary)]" checked={value?.stopId === s.id} onChange={() => { locationRequest.current++; setLocating(false); setPicked(s.place.name); onChange({ placeId: s.placeId, stopId: s.id }, s.place.name); }} />
                 <span><span className="font-semibold">{s.index}. {s.place.name}</span></span>
               </label>
             </li>
@@ -37,16 +81,17 @@ export function PlacePicker({ journey, value, onChange }: { journey: JourneyDto;
       ) : null}
       {tab === "search" ? (
         <div className="flex flex-col gap-3">
-          <form role="search" onSubmit={(e) => { e.preventDefault(); setSubmitted(q.trim()); }}>
-            <Input aria-label="Buscar lugar" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca por nombre y pulsa Enter" />
-          </form>
+          <div role="search" className="flex gap-2">
+            <Input aria-label="Buscar lugar" type="search" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setSubmitted(q.trim()); } }} placeholder="Busca por nombre y pulsa Enter" />
+            <Button variant="outline" onClick={() => setSubmitted(q.trim())}>Buscar</Button>
+          </div>
           {search.isPending ? <p role="status" className="text-sm text-muted-foreground">Buscando…</p> : null}
           {search.data?.length === 0 ? <p className="text-sm text-muted-foreground">Sin resultados. Prueba «Lugar nuevo».</p> : null}
           <ul className="m-0 flex max-h-64 list-none flex-col gap-2 overflow-y-auto p-0">
             {search.data?.map((p) => (
               <li key={p.id}>
                 <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border border-border bg-surface px-3 py-2 has-[:checked]:border-primary has-[:checked]:bg-sage/40 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-focus">
-                  <input type="radio" name="lugar" className="size-5 accent-[var(--primary)]" checked={value?.placeId === p.id && !value.stopId} onChange={() => { setPicked(p.name); onChange({ placeId: p.id }, p.name); }} />
+                  <input type="radio" name="lugar" className="size-5 accent-[var(--primary)]" checked={value?.placeId === p.id && !value.stopId} onChange={() => { locationRequest.current++; setLocating(false); setPicked(p.name); onChange({ placeId: p.id }, p.name); }} />
                   <span><span className="font-semibold">{p.name}</span><span className="block text-sm text-muted-foreground">{[p.locality, p.countryCode].filter(Boolean).join(", ")}{p.scope === "PERSONAL" ? " · personal" : ""}</span></span>
                 </label>
               </li>
@@ -56,13 +101,14 @@ export function PlacePicker({ journey, value, onChange }: { journey: JourneyDto;
       ) : null}
       {tab === "new" ? (
         <div className="flex flex-col gap-3">
-          <Field label="Nombre del lugar" required>{(c) => <Input {...c} value={name} maxLength={120} onChange={(e) => { setName(e.target.value); onChange(pt && e.target.value.trim() ? { newPlace: { name: e.target.value.trim(), lng: pt.lng, lat: pt.lat } } : null, e.target.value); }} placeholder="Un mirador, una casa de té…" />}</Field>
+          <Field label="Nombre del lugar" required>{(c) => <Input {...c} value={name} maxLength={120} onChange={(e) => { locationRequest.current++; setLocating(false); setName(e.target.value); onChange(pt && e.target.value.trim() ? { newPlace: { name: e.target.value.trim(), lng: pt.lng, lat: pt.lat } } : null, e.target.value); }} placeholder="Un rincón del malecón, un lugar junto al río…" />}</Field>
           <p className="text-sm font-semibold">Toca el mapa donde estuviste</p>
-          <MapPanel className="h-64" ariaLabel="Mapa para marcar el lugar visitado" markers={pt ? [{ id: "p", lng: pt.lng, lat: pt.lat, state: "current", label: "Lugar nuevo" }] : []} fitKey={pt ? "p" : "n"} onMapClick={(p) => { setPt(p); onChange(name.trim() ? { newPlace: { name: name.trim(), lng: p.lng, lat: p.lat } } : null, name); }} clickHint="Toca para marcar" />
+          <MapPanel className="h-64" ariaLabel="Mapa para marcar el lugar visitado" markers={pt ? [{ id: "p", lng: pt.lng, lat: pt.lat, state: "current", label: name.trim() || "Lugar nuevo" }] : []} fitKey={pt ? `${pt.lng}:${pt.lat}` : "n"} onMapClick={(p) => { locationRequest.current++; setLocating(false); setAccuracy(null); setPt(p); onChange(name.trim() ? { newPlace: { name: name.trim(), lng: p.lng, lat: p.lat } } : null, name); }} clickHint="Toca para marcar" />
+          {pt ? <div className="flex flex-wrap items-center justify-between gap-2"><p role="status" className="text-xs text-muted-foreground">Punto marcado: {pt.lat.toFixed(5)}, {pt.lng.toFixed(5)}{accuracy !== null ? ` · Precisión aproximada: ${Math.round(accuracy)} m` : ""}</p><Button size="sm" variant="ghost" onClick={() => { locationRequest.current++; setLocating(false); setPt(null); setAccuracy(null); onChange(null, ""); }}>Quitar punto</Button></div> : null}
           <p className="text-xs text-muted-foreground">Se guarda como lugar personal: es privado y solo tú lo ves.</p>
         </div>
       ) : null}
-      {value ? <p role="status" className="text-sm font-semibold text-success">Lugar elegido: {picked || name}</p> : <p className="text-sm text-muted-foreground">Elige un lugar para continuar.</p>}
+      {value ? <p role="status" className="text-sm font-semibold text-success">Lugar elegido: {value.newPlace?.name || picked || name}</p> : <p className="text-sm text-muted-foreground">Elige un lugar para continuar.</p>}
     </div>
   );
 }

@@ -4,11 +4,12 @@ import { Queue } from "bullmq";
 import { Redis } from "ioredis";
 import type { Pool } from "pg";
 import { ENV, type Env } from "../config/env";
-import { MailerPort, SmtpMailer } from "./mail/mailer";
+import { createMailerAdapter, createStorage } from "./adapters";
+import { MailerPort } from "./mail/mailer";
 import { OutboxService } from "./outbox.service";
 import { RateLimitService } from "./rate-limit.service";
 import { GeocoderPort, RoutingPort, createGeocoder, createRouting } from "./geo/providers";
-import { S3Storage, StoragePort } from "./storage/storage";
+import { StoragePort } from "./storage/storage";
 import { DB, POOL, QUEUES, QUEUE_NAMES, REDIS, redisConnectionOptions, type QueueMap } from "./tokens";
 
 @Injectable()
@@ -42,8 +43,8 @@ class Lifecycle implements OnApplicationShutdown {
         };
       },
     },
-    { provide: StoragePort, inject: [ENV], useFactory: (env: Env) => new S3Storage(env) },
-    { provide: MailerPort, inject: [ENV], useFactory: (env: Env) => new SmtpMailer(env) },
+    { provide: StoragePort, inject: [ENV], useFactory: (env: Env) => createStorage(env) },
+    { provide: MailerPort, inject: [ENV], useFactory: (env: Env) => createMailerAdapter(env) },
     { provide: RoutingPort, inject: [ENV], useFactory: (env: Env) => createRouting(env) },
     { provide: GeocoderPort, inject: [ENV], useFactory: (env: Env) => createGeocoder(env) },
     OutboxService,

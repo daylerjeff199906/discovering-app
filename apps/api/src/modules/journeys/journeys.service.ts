@@ -9,13 +9,14 @@ import type {
   TransportMode,
   UpdateJourneyInput,
 } from "@por-aqui/contracts";
-import { journeyDays, journeyLegs, journeys, journeyStops, profiles, publications, recordings, type Db, type DbExecutor } from "@por-aqui/database";
+import { journeyDays, journeyLegs, journeys, journeyStops, profiles, publications, recordings, visitMedia, visits, type Db, type DbExecutor } from "@por-aqui/database";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { AuthUser } from "../../common/decorators";
 import { badRequest, notFound, versionConflict } from "../../common/errors";
 import { RoutingPort } from "../../infrastructure/geo/providers";
 import { DB } from "../../infrastructure/tokens";
 import { PlacesService, placeSnapshot } from "../places/places.service";
+import { MediaService } from "../media/media.service";
 import { buildJourneyDto, defaultPreferences, deriveStatus, loadJourneyDto } from "./journey.mapper";
 
 type JourneyRow = typeof journeys.$inferSelect;
@@ -32,6 +33,7 @@ export class JourneysService {
     @Inject(DB) private readonly db: Db,
     private readonly places: PlacesService,
     private readonly routing: RoutingPort,
+    private readonly media: MediaService,
   ) {}
 
   /** El viaje debe existir y ser del usuario; si no, 404 (no se revela la existencia de recursos ajenos). */
@@ -68,6 +70,7 @@ export class JourneysService {
         visits: sql<number>`(select count(*)::int from visits v where v.journey_id = ${journeys.id})`,
         pubSlug: publications.slug,
         pubVis: publications.visibility,
+        coverUrl: sql<string | null>`(select '/api/v1/media/' || a.id || '/content?variant=thumb&v=' || a.derivative_version from visits v join visit_media vm on vm.visit_id = v.id join media_assets a on a.id = vm.asset_id where v.journey_id = ${journeys.id} and a.status = 'READY' order by v.visited_at, vm.position limit 1)`,
       })
       .from(journeys)
       .leftJoin(recordings, eq(recordings.journeyId, journeys.id))
@@ -85,6 +88,7 @@ export class JourneysService {
       updatedAt: r.j.updatedAt.toISOString(),
       publicationSlug: r.pubVis && r.pubVis !== "PRIVATE" ? r.pubSlug : null,
       publicationVisibility: (r.pubVis as JourneySummaryDto["publicationVisibility"]) ?? null,
+      coverUrl: r.coverUrl,
     }));
     return opts.status ? out.filter((o) => o.status === opts.status) : out;
   }
@@ -140,6 +144,23 @@ export class JourneysService {
       .set({ archivedAt: archived ? new Date() : null, version: sql`${journeys.version} + 1` })
       .where(and(eq(journeys.id, id), eq(journeys.ownerId, user.id)));
     return this.get(user, id);
+  }
+
+  async delete(user: AuthUser, id: string): Promise<{ ok: true }> {
+    await this.db.transaction(async (tx) => {
+      const [owned] = await tx.select().from(journeys).where(and(eq(journeys.id, id), eq(journeys.ownerId, user.id))).for("update");
+      if (!owned) throw notFound("No encontramos ese viaje.");
+      // Bloquea nuevas reservas de fotos mientras se reúnen los archivos a retirar.
+      await tx.select({ id: visits.id }).from(visits).where(eq(visits.journeyId, id)).for("update");
+      const assets = await tx.select({ id: visitMedia.assetId }).from(visitMedia)
+        .innerJoin(visits, eq(visits.id, visitMedia.visitId)).where(eq(visits.journeyId, id));
+      // Los snapshots públicos también se retiran, antes de borrar sus fotos.
+      await tx.delete(publications).where(eq(publications.journeyId, id));
+      await this.media.deleteAssets(tx, user.id, assets.map((a) => a.id));
+      // Las claves foráneas eliminan días, paradas, visitas y puntos GPS.
+      await tx.delete(journeys).where(eq(journeys.id, id));
+    });
+    return { ok: true };
   }
 
   async duplicate(user: AuthUser, id: string): Promise<JourneyDto> {

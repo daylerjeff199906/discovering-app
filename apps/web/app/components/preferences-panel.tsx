@@ -3,16 +3,21 @@ import { Field, Input, Select, cn } from "@por-aqui/ui";
 import { useQuery } from "@tanstack/react-query";
 import { PACE_LABEL, TRANSPORT_LABEL } from "../lib/format";
 import { interestsQuery } from "../lib/query";
+import { useState } from "react";
+import { MapPin } from "lucide-react";
+import { DestinationPicker } from "./destination-picker";
 
 /** Preferencias del viaje (autoguardado por el editor). */
 export function PreferencesPanel({ value, onChange }: { value: JourneyPreferences; onChange: (next: JourneyPreferences) => void }) {
   const interests = useQuery(interestsQuery());
+  const [cityOpen, setCityOpen] = useState(false);
   const set = <K extends keyof JourneyPreferences>(k: K, v: JourneyPreferences[K]) => onChange({ ...value, [k]: v });
   const toggle = (slug: string) => set("interests", value.interests.includes(slug) ? value.interests.filter((i) => i !== slug) : [...value.interests, slug]);
   return (
-    <section aria-labelledby="prefs" className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-      <h2 id="prefs" className="text-lg">Preferencias</h2>
-      <Field label="Destino">{(c) => <Input {...c} value={value.destinationLabel ?? ""} maxLength={120} onChange={(e) => set("destinationLabel", e.target.value)} placeholder="Ciudad o región" />}</Field>
+    <section aria-labelledby="prefs" className="preferences-panel flex flex-col gap-5 rounded-card border border-border bg-surface p-5">
+      <div><p className="eyebrow mb-2">Un camino muy tuyo</p><h2 id="prefs" className="text-2xl">A tu manera</h2></div>
+      <Field label="Ciudad">{(c) => <button {...c} type="button" className="city-field-button" onClick={() => setCityOpen(true)}><span>{value.destinationLabel || "Elegir ciudad"}</span><MapPin size={17} aria-hidden="true" /></button>}</Field>
+      <DestinationPicker open={cityOpen} onClose={() => setCityOpen(false)} selected={value.destinationLabel} onSelect={(city) => set("destinationLabel", city.name)} />
       <Field label="Fecha de inicio (opcional)">{(c) => <Input {...c} type="date" value={value.startDate ?? ""} onChange={(e) => set("startDate", e.target.value || undefined)} />}</Field>
       <Field label="Tiempo por día (min)" hint="Para armar propuestas automáticas.">
         {(c) => <Input {...c} type="number" min={30} max={1440} step={30} value={value.availableMinutesPerDay ?? ""} onChange={(e) => set("availableMinutesPerDay", e.target.value ? Number(e.target.value) : undefined)} placeholder="480" />}

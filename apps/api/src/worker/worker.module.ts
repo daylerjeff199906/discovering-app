@@ -26,9 +26,10 @@ class WorkerRunner implements OnApplicationBootstrap, OnApplicationShutdown {
     private readonly media: MediaService,
   ) {}
   private lastCleanup = 0;
+  private lastReconcile = 0;
 
   async onApplicationBootstrap() {
-    await this.storage.ensureBucket().catch((err) => console.error(JSON.stringify({ level: "error", msg: "ensureBucket failed", err: String(err) })));
+    await this.storage.checkBucket().catch((err) => console.error(JSON.stringify({ level: "error", msg: "R2 no responde", err: String(err) })));
     const connection = redisConnectionOptions(this.env.REDIS_URL);
     const specs: [keyof typeof QUEUE_NAMES, number][] = [["email", 4], ["media", 3], ["purge", 1]];
     for (const [name, concurrency] of specs) {
@@ -55,6 +56,11 @@ class WorkerRunner implements OnApplicationBootstrap, OnApplicationShutdown {
       if (Date.now() - this.lastCleanup > 10 * 60_000) {
         this.lastCleanup = Date.now();
         await this.media.cleanupOrphans();
+      }
+      if (Date.now() - this.lastReconcile > 6 * 3_600_000) {
+        this.lastReconcile = Date.now();
+        const removed = await this.media.reconcileStorage();
+        if (removed > 0) console.log(JSON.stringify({ level: "info", msg: "R2: objetos huérfanos eliminados", removed }));
       }
     } catch (err) {
       console.error(JSON.stringify({ level: "error", msg: "dispatcher", err: String(err) }));

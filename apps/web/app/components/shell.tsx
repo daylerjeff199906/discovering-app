@@ -1,75 +1,63 @@
 import { buttonClass, cn, Avatar, Alert } from "@por-aqui/ui";
 import { useMutation } from "@tanstack/react-query";
-import { Compass, Map as MapIcon, User as UserIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { Bookmark, ChevronDown, Compass, Home, Map as MapIcon, Plus, Settings, User as UserIcon, LogOut } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router";
 import { api, errorMessage } from "../lib/api";
 import { useLogout, useMe } from "../lib/auth";
 import { useUi } from "../lib/stores";
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, to = "/" }: { className?: string; to?: string }) {
   return (
-    <Link to="/" className={cn("inline-flex items-center gap-2 font-serif text-xl font-semibold text-primary no-underline", className)} aria-label="Por aquí, inicio">
-      <svg viewBox="0 0 32 32" className="size-7" fill="none" aria-hidden="true">
-        <circle cx="9" cy="23" r="4" fill="currentColor" />
-        <circle cx="23" cy="9" r="4" fill="none" stroke="currentColor" strokeWidth="2.4" />
-        <path d="M9 19c0-8 14-4 14-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="1 4.5" />
-      </svg>
-      Por aquí
+    <Link to={to} className={cn("brand-wordmark inline-flex flex-col items-start font-serif text-primary no-underline", className)} aria-label={to === "/" ? "Por aquí, inicio" : "Por aquí, mi inicio"}>
+      <span>por aquí<span className="ml-1 text-[0.6em]">↗</span></span>
+      <span className="brand-tagline">Viajes que dejan huella</span>
     </Link>
   );
 }
 
-const NAV = [
-  { to: "/explorar", label: "Explorar", Icon: Compass },
-  { to: "/app/viajes", label: "Mis viajes", Icon: MapIcon },
-  { to: "/app/perfil", label: "Perfil", Icon: UserIcon },
+const PRIVATE_NAV = [
+  { to: "/app/inicio", label: "Inicio", Icon: Home },
+  { to: "/app/guardados", label: "Guardados", Icon: Bookmark },
+  { to: "/app/viajes/nuevo", label: "Nuevo viaje", Icon: Plus },
+] as const;
+const PUBLIC_NAV = [
+  { to: "/", label: "Inicio", Icon: Home },
+  { to: "/explorar", label: "Ideas en Iquitos", Icon: Compass },
 ] as const;
 
 function navClass({ isActive }: { isActive: boolean }) {
-  return cn("rounded-control px-3 py-2 text-base font-semibold no-underline transition-colors", isActive ? "bg-sage text-sage-foreground" : "text-foreground hover:bg-surface-muted");
+  return cn("site-nav-link", isActive ? "text-primary" : "text-muted-foreground");
 }
 
-export function SiteShell({ children, hideFooter }: { children: ReactNode; hideFooter?: boolean }) {
+export function SiteShell({ children, hideFooter, privateArea = false }: { children: ReactNode; hideFooter?: boolean; privateArea?: boolean }) {
   const { me, isLoading } = useMe();
-  const logout = useLogout();
   const loc = useLocation();
   const announcement = useUi((s) => s.announcement);
-  const next = encodeURIComponent(loc.pathname + loc.search);
+  const next = encodeURIComponent(loc.pathname === "/" ? "/app/inicio" : loc.pathname + loc.search);
+  const navigation = privateArea ? PRIVATE_NAV : PUBLIC_NAV;
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-2.5 md:px-6 lg:px-8">
-          <Logo />
+      <header className="site-header sticky top-0 z-30">
+        <div className="site-header-inner mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
+          <Logo to={privateArea ? "/app/inicio" : "/"} />
           <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} className={navClass}>
+            {navigation.map((n) => (
+              <NavLink key={n.to} to={n.to} end className={navClass}>
                 {n.label}
               </NavLink>
             ))}
           </nav>
           <div className="flex min-h-11 items-center gap-2">
             {isLoading ? null : me ? (
-              <>
-                {me.role === "MODERATOR" ? (
-                  <Link to="/moderacion" className={buttonClass({ variant: "ghost", size: "sm" })}>
-                    Moderación
-                  </Link>
-                ) : null}
-                <Link to="/app/perfil" aria-label={`Perfil de ${me.profile.displayName}`} className="rounded-full">
-                  <Avatar name={me.profile.displayName} src={me.profile.avatarUrl} size={36} />
-                </Link>
-                <button type="button" onClick={() => logout.mutate()} className={buttonClass({ variant: "ghost", size: "sm", className: "hidden sm:inline-flex" })}>
-                  Salir
-                </button>
-              </>
+              <AccountPopover />
             ) : (
               <>
                 <Link to={`/ingresar?returnTo=${next}`} className={buttonClass({ variant: "ghost", size: "sm" })}>
                   Ingresar
                 </Link>
-                <Link to="/registro" className={buttonClass({ variant: "primary", size: "sm", className: "hidden sm:inline-flex" })}>
+                <Link to="/registro" className={buttonClass({ variant: "primary", size: "sm", className: "header-desktop-action" })}>
                   Crear cuenta
                 </Link>
               </>
@@ -80,19 +68,19 @@ export function SiteShell({ children, hideFooter }: { children: ReactNode; hideF
 
       {me && !me.emailVerified ? <VerifyBanner email={me.email} /> : null}
 
-      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-28 pt-6 outline-none md:px-6 md:pb-12 lg:px-8">
+      <main id="contenido" tabIndex={-1} className="site-main mx-auto w-full flex-1 px-4 pb-28 outline-none md:px-6 md:pb-12 lg:px-8">
         {children}
       </main>
 
       {hideFooter ? null : (
-        <footer className="hidden border-t border-border py-6 text-center text-sm text-muted-foreground md:block">
-          Por aquí · beta · Tus recorridos son privados hasta que decidas compartirlos.
+        <footer className="site-footer hidden border-t border-border md:block">
+          <div className="site-footer-inner"><Logo /><p className="site-footer-note">Lugares que descubres. Caminos que haces tuyos.<br />Historias que se quedan contigo.</p><div className="text-xs text-muted-foreground"><Link to="/terminos">Términos de la beta</Link><p className="mt-2">Hecho para viajar a tu manera.</p></div></div>
         </footer>
       )}
 
-      <nav aria-label="Principal (móvil)" className="pa-safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-background/95 px-2 pt-1.5 backdrop-blur md:hidden">
-        {NAV.map(({ to, label, Icon }) => (
-          <NavLink key={to} to={to} className={({ isActive }) => cn("flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-control text-xs font-semibold no-underline", isActive ? "text-primary" : "text-muted-foreground")}>
+      <nav aria-label="Principal (móvil)" className={cn("mobile-nav pa-safe-bottom fixed inset-x-0 bottom-0 z-30 grid border-t border-border bg-background/95 px-2 pt-1.5 backdrop-blur md:hidden", privateArea ? "grid-cols-3" : "grid-cols-2")}>
+        {navigation.map(({ to, label, Icon }) => (
+          <NavLink key={to} to={to} end className={({ isActive }) => cn("relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-control text-[10px] font-medium no-underline", isActive ? "text-primary" : "text-muted-foreground")}>
             <Icon className="size-5" aria-hidden="true" />
             {label}
           </NavLink>
@@ -101,6 +89,46 @@ export function SiteShell({ children, hideFooter }: { children: ReactNode; hideF
       <div aria-live="polite" className="sr-only">{announcement}</div>
     </div>
   );
+}
+
+function AccountPopover() {
+  const { me } = useMe();
+  const logout = useLogout();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  const location = useLocation();
+  useEffect(() => setOpen(false), [location.pathname, location.search]);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
+    const escape = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); trigger.current?.focus(); } };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
+  }, [open]);
+  if (!me) return null;
+  const firstName = me.profile.displayName.trim().split(/\s+/u)[0] || "Mi cuenta";
+  return <div ref={root} className="account-popover-root" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    <button ref={trigger} type="button" className="account-trigger" aria-label={`Opciones de ${me.profile.displayName}`} aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>
+      <Avatar name={me.profile.displayName} src={me.profile.avatarUrl} size={36} />
+      <span className="account-trigger-identity"><strong>{firstName}</strong><span>{me.email}</span></span>
+      <ChevronDown size={14} aria-hidden="true" />
+    </button>
+    {open ? <div id={id} className="account-popover" aria-label="Tu cuenta">
+      <div className="account-identity"><strong>{firstName}</strong><span>{me.email}</span></div>
+      <nav aria-label="Opciones de usuario">
+        <Link to="/app/inicio"><Home size={17} aria-hidden="true" /> Inicio</Link>
+        <Link to="/app/viajes"><MapIcon size={17} aria-hidden="true" /> Mis viajes</Link>
+        <Link to="/app/perfil"><UserIcon size={17} aria-hidden="true" /> Mi perfil</Link>
+        <Link to="/app/cuenta"><Settings size={17} aria-hidden="true" /> Configuración de cuenta</Link>
+        {me.role === "MODERATOR" ? <><Link to="/app/catalogo">Administrar catálogo</Link><Link to="/moderacion">Moderación</Link></> : null}
+      </nav>
+      <button type="button" disabled={logout.isPending} onClick={() => logout.mutate()}><LogOut size={17} aria-hidden="true" />{logout.isPending ? "Cerrando sesión…" : "Cerrar sesión"}</button>
+      {logout.isError ? <p role="alert" className="text-sm text-danger">{errorMessage(logout.error)}</p> : null}
+    </div> : null}
+  </div>;
 }
 
 function VerifyBanner({ email }: { email: string }) {
@@ -127,7 +155,7 @@ function VerifyBanner({ email }: { email: string }) {
 
 export function PageHeader({ title, subtitle, actions }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="page-heading flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         <h1 className="text-3xl md:text-4xl">{title}</h1>
         {subtitle ? <p className="mt-1 max-w-2xl text-muted-foreground">{subtitle}</p> : null}

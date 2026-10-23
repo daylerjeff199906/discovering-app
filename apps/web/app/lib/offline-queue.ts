@@ -142,6 +142,17 @@ export async function discardPending(userId: string, recordingId: string, journe
   for (const v of await d.getAllFromIndex("visits", "byJourney", journeyId)) await d.delete("visits", v.clientMutationId);
 }
 
+/** Retira también los segmentos locales cuando se elimina definitivamente un viaje. */
+export async function discardJourneyData(userId: string, journeyId: string, recordingId?: string): Promise<void> {
+  const d = await db(userId);
+  for (const v of await d.getAllFromIndex("visits", "byJourney", journeyId)) await d.delete("visits", v.clientMutationId);
+  if (!recordingId) return;
+  for (const k of await d.getAllKeysFromIndex("points", "byRecording", recordingId)) await d.delete("points", k);
+  for (const segment of await d.getAll("segments")) {
+    if (segment.recordingId === recordingId) await d.delete("segments", [recordingId, segment.segmentClientId]);
+  }
+}
+
 /** Al cerrar sesión se elimina la base local del usuario. */
 export async function clearLocalData(userId: string): Promise<void> {
   const h = handles.get(userId);

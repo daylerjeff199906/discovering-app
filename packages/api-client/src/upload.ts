@@ -6,21 +6,19 @@ export interface UploadProgress {
 }
 
 /**
- * Sube el archivo directo al almacenamiento con el POST prefirmado (XHR para reportar progreso).
- * Devuelve el estado HTTP; la API verifica los bytes y el worker genera los derivados.
+ * Sube el archivo directo a Cloudflare R2 con la URL PUT prefirmada (XHR para reportar progreso).
+ * La API verifica los bytes al confirmar y el worker genera los derivados.
  */
 export function uploadToStorage(auth: UploadAuthorization, file: Blob, onProgress?: (p: UploadProgress) => void, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    const form = new FormData();
-    for (const [k, v] of Object.entries(auth.fields)) form.append(k, v);
-    form.append("file", file); // el campo "file" debe ir al final
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", auth.url);
+    xhr.open(auth.method, auth.url);
+    for (const [name, value] of Object.entries(auth.headers)) xhr.setRequestHeader(name, value);
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.({ loaded: e.loaded, total: e.total });
     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`UPLOAD_REJECTED_${xhr.status}`)));
     xhr.onerror = () => reject(new Error("UPLOAD_NETWORK"));
     xhr.onabort = () => reject(new DOMException("Aborted", "AbortError"));
     signal?.addEventListener("abort", () => xhr.abort(), { once: true });
-    xhr.send(form);
+    xhr.send(file);
   });
 }

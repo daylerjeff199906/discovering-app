@@ -47,6 +47,12 @@ export class JourneysController {
     return this.journeys.get(user, id);
   }
 
+  @Delete(":id")
+  @Api({ summary: "Eliminar mi viaje y sus recuerdos y publicación" })
+  delete(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string) {
+    return this.journeys.delete(user, id);
+  }
+
   @Patch(":id")
   @Api({ summary: "Editar datos/preferencias (control optimista por versión)", body: updateJourneyInputSchema })
   update(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string, @Body() body: UpdateJourneyInput) {

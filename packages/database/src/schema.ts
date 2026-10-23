@@ -168,6 +168,17 @@ export const placeInterests = pgTable(
   (t) => [primaryKey({ columns: [t.placeId, t.interestId] })],
 );
 
+export const catalogContent = pgTable("catalog_content", {
+  key: text("key").primaryKey(),
+  data: jsonb("data").notNull(),
+  updatedAt: updatedAt(),
+});
+export const savedPlaces = pgTable("saved_places", {
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  placeId: uuid("place_id").notNull().references(() => places.id, { onDelete: "cascade" }),
+  createdAt: createdAt(),
+}, (t) => [primaryKey({ columns: [t.userId, t.placeId] })]);
+
 /* ─────────────────────────── Planificación ─────────────────────────── */
 
 export const journeys = pgTable(

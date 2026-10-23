@@ -2,16 +2,35 @@
 
 Este documento distingue **lo que se ejecutó y probó** de lo que está implementado pero **no se pudo validar**, y de lo que queda **fuera de la beta**. No presenta la especificación como algo desplegado.
 
+## Actualización del 22 de octubre de 2026
+
+- Catálogo administrable en `/app/catalogo`, protegido por rol también en la API: ciudades, lugares, imágenes/URLs, textos del banner y tarjetas de creación. La migración `0002_sudden_medusa.sql` añade el contenido persistente y los lugares guardados.
+- Inicio privado con fotografía de fondo, selector de ciudad y ubicación opcional; inicialmente Iquitos y ocho lugares. El selector usa solo ciudades activas del catálogo.
+- Registro de visita con fotos preparadas antes de guardar, cámara, miniaturas, fecha/hora y notas. Conserva los identificadores de visita/subida en reintentos. Las visitas sin fotos mantienen el soporte sin conexión existente.
+- Añadir parada presenta miniaturas, Cercanos/Guardados y creación personal en el mapa. Las acciones de tarjetas usan iconos con nombres accesibles.
+- Diario con Historia/Mapa/Trayecto, fotos en la secuencia, edición de recuerdos y hoja para compartir. El trayecto muestra exclusivamente segmentos GPS almacenados. Finalizar permite cambiar el título y elegir privado o pasar a revisión de publicación.
+- Revisiones actuales: migración aplicada, compilación de paquetes, comprobaciones estáticas y presentación en navegador móvil. No se han vuelto a ejecutar las suites funcionales históricas enumeradas debajo. Las capturas de esta actualización usan una cuenta de presentación temporal.
+
+Guía de administración y límites: [CATALOG.md](CATALOG.md).
+
+Actualización de alcance: la presentación y el catálogo demo se centran en Iquitos (8 lugares). Se retiraron las fotografías y capturas antiguas de otros destinos. Las nuevas capturas `inicio-iquitos.png` e `ingreso-iquitos.png` corresponden a la revisión visual de esta actualización; no implican una nueva ejecución de toda la suite E2E.
+
 ## 1. Ejecutado y probado
 
-Entorno: Windows 10, Node 24.11, Docker Desktop (PostGIS 17-3.5, Redis 7.4, MinIO comunitario, Mailpit), Chrome estable.
+### Actualización de navegación, eliminación e ilustraciones
+
+Portada privada añadida en `/app/inicio` (también accesible desde `/app`), con saludo personal, accesos de creación y viajes recientes del usuario. Inicio aparece en la navegación privada y el popover; el logo privado vuelve a esa portada. Nuevo viaje se presenta en una columna centrada con tarjetas ilustradas y formulario compacto. Se conservan los modos automático, manual y libre. El ingreso sin una acción pendiente abre el inicio privado.
+
+Implementados: `DELETE /journeys/:id` con control de propietario, retirada de publicación, limpieza de fotos por outbox y cascadas; confirmación en Mis viajes; navegación pública/privada separada, popover del avatar y banner al portal; selección de aventura con dos ilustraciones generadas de Iquitos y modo libre persistente. Comprobaciones estáticas de web/API y cliente tipado. Esta actualización no vuelve a ejecutar las suites funcionales enumeradas abajo.
+
+Entorno: Windows 10, Node 24.11, Docker Desktop (PostGIS 17-3.5, Redis 7.4; archivos en Cloudflare R2 y correo con Resend, aún sin probar contra los servicios reales), Chrome estable.
 
 | Qué | Resultado |
 |---|---|
 | `pnpm install`, `pnpm build`, `pnpm typecheck`, `pnpm lint` | Pasan en los 9 workspaces |
 | Migraciones SQL (`0000_init`, `0001_postgis_constraints`) | Aplicadas a PostgreSQL/PostGIS **reales** (26 tablas, triggers, restricciones diferibles, FKs compuestas) |
-| Seeds | Intereses, 21 lugares de demostración (Iquitos/Cusco/Lisboa) y una ruta pública de ejemplo |
-| Pruebas de la API (Vitest + Supertest, **servicios reales**: PostgreSQL/PostGIS, Redis, MinIO, Mailpit) | **69 pruebas en 7 archivos** |
+| Seeds | Intereses, 8 lugares de demostración en Iquitos y una ruta pública de ejemplo |
+| Pruebas de la API (Vitest + Supertest, PostgreSQL/PostGIS y Redis reales; R2 y Resend en memoria) | **69 pruebas en 7 archivos** |
 | Pruebas del frontend (jsdom, IndexedDB simulada) | 21 (reordenamiento, GPS, cola offline, sincronización, formato/zonas) |
 | Pruebas de UI (`JourneyTrail`) | 5 |
 | Pruebas de contratos | 8 |
@@ -21,7 +40,7 @@ Entorno: Windows 10, Node 24.11, Docker Desktop (PostGIS 17-3.5, Redis 7.4, MinI
 
 ### Cobertura funcional de las pruebas de la API (mapa a los criterios de aceptación)
 
-1. **Cuenta → correo real (Mailpit) → verificar → login → logout → reset**; reset revoca sesiones; no revela si un correo existe; CSRF; sesión solo como hash.
+1. **Cuenta → correo enviado → verificar → login → logout → reset**; reset revoca sesiones; no revela si un correo existe; CSRF; sesión solo como hash.
 2. **Aislamiento (IDOR)**: otro usuario recibe 404 en viajes, paradas, visitas, ejecución, medios, publicación y lugares personales.
 3. **Ruta manual persistente** (días, orden, preferencias) tras recargar.
 4. **Reordenamiento concurrente**: dos peticiones con la misma versión → una gana (200) y la otra 409 sin pérdida de datos.
@@ -58,7 +77,7 @@ Además: límite de peticiones real (429 + `Retry-After`), cabeceras, CORS, Open
 | **`compose.prod.yaml` y Caddy (TLS, proxy)** | Escritos, **no ejecutados**. (Las imágenes sí se construyeron y arrancaron: ver sección 4.) |
 | **Navegadores** | Solo Chrome (Playwright) y el navegador integrado. No Safari/Firefox ni teléfono físico. |
 | **Lector de pantalla** | Solo auditoría automática (axe, WCAG A/AA con contraste). No hubo revisión manual con NVDA/VoiceOver. |
-| **Proveedor de correo transaccional** | Solo SMTP contra Mailpit. |
+| **Cloudflare R2 y Resend en vivo** | Integrados (subida PUT firmada, borrado por carpeta, envío con Resend) pero **no probados con claves reales**: faltan pegar las claves y crear el bucket (ver [SETUP.md](SETUP.md#cloudflare-r2-archivos)). |
 | **Respaldo/restauración** | Procedimiento documentado, no automatizado ni ejecutado. |
 
 ## 3. Límites de la beta y decisiones a conocer
@@ -71,7 +90,7 @@ Además: límite de peticiones real (429 + `Retry-After`), cabeceras, CORS, Open
 - **Moderación**: «Descartar reporte» queda auditado como `RESTORE` con motivo (la tabla de auditoría solo admite HIDE/RESTORE).
 - **Revocación de medios**: lecturas autorizadas en cada petición; tickets de historias por enlace de 15 min y respuestas públicas cacheables hasta 5 min.
 - **El límite de peticiones falla abierto** si Redis no responde (queda registrado). Los E2E registran varias cuentas: ejecútalos con `RATE_LIMIT_ENABLED=false` (el servidor solo lo permite fuera de producción) o limpia las claves `rl:*` de Redis.
-- **Versiones**: NestJS 11 (no 12), TypeScript 5.9 (no 7), MinIO como build comunitaria fijada. Detalle en [DEPENDENCIES.md](DEPENDENCIES.md).
+- **Versiones**: NestJS 11 (no 12), TypeScript 5.9 (no 7), Cloudflare R2 en lugar de S3/MinIO. Detalle en [DEPENDENCIES.md](DEPENDENCIES.md).
 - **Modos de ejecución**: `pnpm dev` (vigilantes; puede reiniciar la API unos segundos al arrancar o tras editar) y `pnpm build && pnpm preview` (compilado y estable; es el que usan los E2E).
 
 ## 4. Producción

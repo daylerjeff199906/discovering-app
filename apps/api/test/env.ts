@@ -22,7 +22,6 @@ export function applyTestEnv(): { adminUrl: string; testUrl: string } {
   process.env.NODE_ENV = "test";
   process.env.RATE_LIMIT_ENABLED = "false";
   process.env.ENABLE_DEMO_CONTENT = "false";
-  process.env.S3_BUCKET = "poraqui-media-test";
   process.env.REDIS_URL = (process.env.REDIS_URL ?? "redis://localhost:6380").replace(/\/\d*$/, "") + "/0";
   return { adminUrl, testUrl };
 }

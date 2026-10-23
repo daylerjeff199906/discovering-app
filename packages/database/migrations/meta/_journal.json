@@ -15,6 +15,13 @@
       "when": 1792605871626,
       "tag": "0001_postgis_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792708865729,
+      "tag": "0002_sudden_medusa",
+      "breakpoints": true
     }
   ]
 }

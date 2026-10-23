@@ -40,6 +40,7 @@ import type {
   UploadAuthorization,
   Visibility,
   VisitDto,
+  TravelCatalog,
 } from "@por-aqui/contracts";
 import type { HttpClient } from "./http";
 
@@ -57,6 +58,14 @@ export interface Destination {
 /** Capa tipada sobre HttpClient: una función por endpoint de la API. */
 export function createApi(http: HttpClient) {
   return {
+    catalog: {
+      get: (o?: Sig) => http.get<TravelCatalog>("/catalog", o),
+      admin: (o?: Sig) => http.get<TravelCatalog>("/catalog/admin", o),
+      save: (data: TravelCatalog) => http.put<TravelCatalog>("/catalog/admin", data),
+      savedPlaces: (o?: Sig) => http.get<PlaceDto[]>("/catalog/saved-places", o),
+      savePlace: (id: string) => http.put<{ ok: true }>(`/catalog/saved-places/${id}`),
+      unsavePlace: (id: string) => http.delete<{ ok: true }>(`/catalog/saved-places/${id}`),
+    },
     meta: {
       capabilities: (o?: Sig) => http.get<CapabilitiesDto>("/meta/capabilities", o),
       interests: (o?: Sig) => http.get<InterestDto[]>("/meta/interests", o),
@@ -93,6 +102,7 @@ export function createApi(http: HttpClient) {
       get: (id: string, o?: Sig) => http.get<JourneyDto>(`/journeys/${id}`, o),
       update: (id: string, i: UpdateJourneyInput) => http.patch<JourneyDto>(`/journeys/${id}`, i),
       duplicate: (id: string) => http.post<JourneyDto>(`/journeys/${id}/duplicate`),
+      remove: (id: string) => http.delete<{ ok: true }>(`/journeys/${id}`),
       archive: (id: string) => http.post<JourneyDto>(`/journeys/${id}/archive`),
       unarchive: (id: string) => http.post<JourneyDto>(`/journeys/${id}/unarchive`),
       addDay: (id: string, i: { expectedVersion: number; localDate?: string | null; destinationLabel?: string | null }) => http.post<JourneyDto>(`/journeys/${id}/days`, i),

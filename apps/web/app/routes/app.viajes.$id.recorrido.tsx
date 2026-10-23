@@ -1,11 +1,13 @@
 import { ApiError } from "@por-aqui/api-client";
-import { Alert, Badge, Button, Dialog, EmptyState, JourneyTrail, Lightbox, buttonClass, type TrailItem } from "@por-aqui/ui";
+import type { RecordingDto } from "@por-aqui/contracts";
+import { Alert, Badge, Button, Dialog, EmptyState, Field, Input, JourneyTrail, Lightbox, buttonClass, type TrailItem } from "@por-aqui/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Crosshair, MapPinPlus, Pause, Play, RefreshCw, WifiOff } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { MapPanel, type MapLine, type MapMarker } from "../components/map";
 import { LoadingBlock, PageHeader, QueryError } from "../components/shell";
+import { StartAdventure, type AdventureMode } from "../components/start-adventure";
 import { api, errorMessage } from "../lib/api";
 import { useMe } from "../lib/auth";
 import { browserTimezone, formatDateTime, STATUS_LABEL, STATUS_TONE, uuid } from "../lib/format";
@@ -58,6 +60,8 @@ export default function Recorrido() {
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
+  const [finishTitle, setFinishTitle] = useState("");
+  const [finishVisibility, setFinishVisibility] = useState<"PRIVATE" | "PUBLIC">("PRIVATE");
   const [pendingDialog, setPendingDialog] = useState<null | { points: number; visits: number }>(null);
   const [gallery, setGallery] = useState<{ urls: { src: string; alt: string }[]; index: number } | null>(null);
 
@@ -102,11 +106,11 @@ export default function Recorrido() {
 
   useEffect(() => () => recorder.current?.stop(), []);
 
-  const startGps = () => {
-    if (!rec || !userId) return;
+  const startGps = (recording: RecordingDto | null = rec) => {
+    if (!recording || !userId) return;
     const cfg = { maxAccuracyM: caps.data?.track.maxAccuracyM ?? 100, minDistanceM: caps.data?.track.minDistanceM ?? 5, gapMs: 60_000 };
     recorder.current?.stop();
-    recorder.current = new TrackRecorder(userId, rec.id, cfg, {
+    recorder.current = new TrackRecorder(userId, recording.id, cfg, {
       onStatus: (s, d) => { setGps(s); setGpsDetail(d ?? ""); },
       onPoint: (p) => { setLive((l) => [...l.slice(-1999), [p.lng, p.lat]]); void refreshCounts(); },
     });
@@ -124,17 +128,30 @@ export default function Recorrido() {
 
   const pause = useMutation({ mutationFn: async () => { const was = gps === "tracking"; recorder.current?.stop(); wasTracking.current = was; await sync(); return api.recording.pause(id); }, onSuccess: () => { void qc.invalidateQueries({ queryKey: qk.journey(id) }); announce("Recorrido en pausa"); } });
   const resume = useMutation({ mutationFn: () => api.recording.resume(id), onSuccess: async () => { await qc.invalidateQueries({ queryKey: qk.journey(id) }); announce("Recorrido reanudado"); if (wasTracking.current) setTimeout(startGps, 100); } });
-  const start = useMutation({ mutationFn: () => api.recording.start(id), onSuccess: () => qc.invalidateQueries({ queryKey: qk.journey(id) }) });
+  const start = useMutation({ mutationFn: async (choice: { mode: AdventureMode; gps: boolean }) => {
+    const current = journey.data!;
+    const updated = await api.journeys.update(id, { expectedVersion: current.version, preferences: { ...current.preferences, explorationMode: choice.mode } });
+    qc.setQueryData(qk.journey(id), updated);
+    return api.recording.start(id);
+  }, onSuccess: async (recording, choice) => {
+    if (choice.gps) startGps(recording);
+    await Promise.all([qc.invalidateQueries({ queryKey: qk.journey(id) }), qc.invalidateQueries({ queryKey: ["journeys"] })]);
+  } });
 
   const finish = useMutation({
     mutationFn: async (discard: boolean) => {
+      if (!finishTitle.trim()) throw new Error("Escribe un título para guardar el recorrido.");
       recorder.current?.stop();
       if (discard && userId && rec) await discardPending(userId, rec.id, id);
       else await sync();
       const watermarks = discard ? {} : userId && rec ? await segmentWatermarks(userId, rec.id) : {};
+      if (journey.data && finishTitle.trim() !== journey.data.title) {
+        const updated = await api.journeys.update(id, { expectedVersion: journey.data.version, title: finishTitle.trim() });
+        qc.setQueryData(qk.journey(id), updated);
+      }
       return api.recording.finish(id, { watermarks, discardPending: discard });
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["journeys"] }); navigate(`/app/viajes/${id}?finalizado=1`); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["journeys"] }); navigate(finishVisibility === "PRIVATE" ? `/app/viajes/${id}?finalizado=1` : `/app/viajes/${id}/compartir?visibilidad=PUBLIC&ocultarTrayecto=1`); },
     onError: async (err) => {
       if (err instanceof ApiError && err.code === "PENDING_TRACK_DATA") {
         const c = userId && rec ? await pendingCounts(userId, rec.id, id) : { points: 0, visits: 0, failedVisits: 0 };
@@ -172,16 +189,15 @@ export default function Recorrido() {
 
   const j = journey.data;
   const states = useMemo(() => (j ? stopStates(j, visits.data ?? []) : new Map()), [j, visits.data]);
-  const stops = useMemo(() => (j ? flattenStops(j) : []), [j]);
+  const stops = useMemo(() => (j && j.preferences.explorationMode !== "FREE" ? flattenStops(j) : []), [j]);
 
   if (journey.isPending) return <LoadingBlock label="Cargando el recorrido…" />;
   if (journey.isError || !j) return <QueryError error={journey.error} retry={() => journey.refetch()} />;
 
   if (!rec) {
+    if (j.status === "ARCHIVED") return <EmptyState title="Este viaje está archivado" action={<Link to="/app/viajes" className={buttonClass({})}>Volver a mis viajes</Link>}>Desarchívalo desde Mis viajes para iniciar el recorrido.</EmptyState>;
     return (
-      <EmptyState title="Este viaje todavía no se inició" action={<Button loading={start.isPending} onClick={() => start.mutate()}>Iniciar recorrido</Button>}>
-        Al iniciar puedes registrar visitas con fotos y notas. El GPS es opcional.
-      </EmptyState>
+      <StartAdventure journeyId={id} hasStops={flattenStops(j).length > 0} defaultFree={j.creationMode === "FREE" || j.preferences.explorationMode === "FREE"} pending={start.isPending} error={start.error} onStart={(choice) => start.mutate(choice)} />
     );
   }
   if (rec.status === "COMPLETED") {
@@ -214,7 +230,7 @@ export default function Recorrido() {
       ),
     };
   });
-  const freeVisits = (visits.data ?? []).filter((v) => !v.stopId);
+  const freeVisits = (visits.data ?? []).filter((v) => j.preferences.explorationMode === "FREE" || !v.stopId);
   const freeItems: TrailItem[] = freeVisits.map((v) => ({
     id: v.id,
     title: v.place.name,
@@ -243,7 +259,7 @@ export default function Recorrido() {
           <>
             <Link to={`/app/viajes/${id}/visitas/nueva`} className={buttonClass({ variant: "secondary" })}><MapPinPlus className="size-5" aria-hidden="true" /> Añadir otro lugar</Link>
             {rec.status === "ACTIVE" ? <Button variant="outline" loading={pause.isPending} onClick={() => pause.mutate()}><Pause className="size-5" aria-hidden="true" /> Pausar</Button> : <Button variant="outline" loading={resume.isPending} onClick={() => resume.mutate()}><Play className="size-5" aria-hidden="true" /> Reanudar</Button>}
-            <Button onClick={() => setFinishOpen(true)}>Finalizar</Button>
+            <Button onClick={() => { setFinishTitle(j.title); setFinishOpen(true); }}>Finalizar</Button>
           </>
         }
       />
@@ -267,7 +283,7 @@ export default function Recorrido() {
             </p>
           ) : <p className="text-sm text-success" role="status">Todo sincronizado ✓</p>}
           <Button size="sm" variant="outline" loading={syncing} onClick={() => void sync()}><RefreshCw className="size-4" aria-hidden="true" /> Sincronizar</Button>
-          {gps === "tracking" || gps === "asking" ? <Button size="sm" variant="outline" onClick={stopGps}>Detener GPS</Button> : <Button size="sm" disabled={rec.status !== "ACTIVE"} onClick={startGps}>Activar GPS</Button>}
+          {gps === "tracking" || gps === "asking" ? <Button size="sm" variant="outline" onClick={stopGps}>Detener GPS</Button> : <Button size="sm" disabled={rec.status !== "ACTIVE"} onClick={() => startGps()}>Activar GPS</Button>}
         </div>
       </section>
 
@@ -296,7 +312,13 @@ export default function Recorrido() {
         </aside>
       </div>
 
-      <Dialog open={finishOpen} onClose={() => setFinishOpen(false)} title="¿Finalizar el recorrido?" description="Revisa el resumen antes de cerrar." footer={<><Button variant="ghost" onClick={() => setFinishOpen(false)}>Seguir registrando</Button><Button loading={finish.isPending} onClick={() => void tryFinish()}>Finalizar y guardar</Button></>}>
+      <Dialog open={finishOpen} onClose={() => { if (!finish.isPending) setFinishOpen(false); }} title="Finalizar recorrido" className="finish-journey-dialog" footer={<><Button variant="outline" disabled={finish.isPending} onClick={() => setFinishOpen(false)}>Seguir explorando</Button><Button disabled={!finishTitle.trim()} loading={finish.isPending} onClick={() => void tryFinish()}>{finishVisibility === "PRIVATE" ? "Guardar recorrido" : "Guardar y revisar publicación"}</Button></>}>
+        <h3 className="text-2xl mb-2">{j.title}</h3><p className="text-sm text-muted-foreground mb-4">{j.preferences.destinationLabel}</p>
+        {visits.data?.flatMap((v) => v.media).find((m) => m.status === "READY")?.displayUrl ? <img className="finish-journey-cover" src={visits.data.flatMap((v) => v.media).find((m) => m.status === "READY")!.displayUrl!} alt="Una foto de tu recorrido" width={650} height={330} /> : null}
+        <div className="finish-counts"><span>{visits.data?.length ?? 0} visitas</span><span>{photos} fotos</span></div>
+        <Field label="Título del recorrido">{(c) => <Input {...c} value={finishTitle} maxLength={120} disabled={finish.isPending} onChange={(e) => setFinishTitle(e.target.value)} />}</Field>
+        <fieldset className="finish-visibility" disabled={finish.isPending}><legend>Visibilidad</legend><label><input type="radio" name="finish-visibility" checked={finishVisibility === "PRIVATE"} onChange={() => setFinishVisibility("PRIVATE")} />Privado</label><label><input type="radio" name="finish-visibility" checked={finishVisibility === "PUBLIC"} onChange={() => setFinishVisibility("PUBLIC")} />Público</label></fieldset>
+        <p className="text-sm text-muted-foreground mb-5">{finishVisibility === "PRIVATE" ? "Solo tú puedes verlo." : "Revisarás qué visitas, notas y fotos publicar antes de compartirlo."}</p>
         <dl className="grid grid-cols-2 gap-y-1 text-sm">
           <dt className="text-muted-foreground">Visitas registradas</dt><dd>{visits.data?.length ?? 0}</dd>
           <dt className="text-muted-foreground">Fotos</dt><dd>{photos}</dd>

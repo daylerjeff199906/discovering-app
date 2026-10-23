@@ -9,7 +9,7 @@ import { databaseUrl } from "./env";
 
 /**
  * Seeds deterministas SOLO para desarrollo/demostración.
- * - Catálogo de lugares de ejemplo (Iquitos, Cusco, Lisboa) sin verificar.
+ * - Catálogo de lugares de Iquitos, con ubicaciones de demostración sin verificar.
  * - Un autor de demostración (sin contraseña utilizable) con una ruta pública de texto: sin fotos.
  */
 async function main() {

@@ -1,5 +1,7 @@
-import { createTransport, type Transporter } from "nodemailer";
-import type { Env } from "../../config/env";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { Resend } from "resend";
+import { findRepoRoot, type Env } from "../../config/env";
 
 export interface MailMessage {
   to: string;
@@ -12,20 +14,43 @@ export abstract class MailerPort {
   abstract send(message: MailMessage): Promise<void>;
 }
 
-export class SmtpMailer extends MailerPort {
-  private readonly transport: Transporter;
+/** Envío real con Resend. Un error de Resend se propaga para que el evento del outbox se reintente. */
+export class ResendMailer extends MailerPort {
+  private readonly client: Resend;
   constructor(private readonly env: Env) {
     super();
-    this.transport = createTransport({
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: env.SMTP_SECURE,
-      auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined,
-    });
+    this.client = new Resend(env.RESEND_API_KEY);
   }
   async send(message: MailMessage): Promise<void> {
-    await this.transport.sendMail({ from: this.env.MAIL_FROM, ...message });
+    const { error } = await this.client.emails.send({
+      from: this.env.MAIL_FROM,
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+      ...(this.env.MAIL_REPLY_TO ? { replyTo: this.env.MAIL_REPLY_TO } : {}),
+    });
+    if (error) throw new Error(`RESEND_${error.name}: ${error.message}`);
   }
+}
+
+/** Solo desarrollo, sin RESEND_API_KEY: deja cada correo como archivo de texto (con el enlace) en DEV_MAIL_DIR. */
+export class DevMailer extends MailerPort {
+  constructor(private readonly env: Env) {
+    super();
+  }
+  async send(message: MailMessage): Promise<void> {
+    const dir = path.resolve(findRepoRoot(), this.env.DEV_MAIL_DIR);
+    await mkdir(dir, { recursive: true });
+    const safeTo = message.to.replace(/[^a-z0-9@._-]/gi, "_");
+    const file = path.join(dir, `${Date.now()}-${safeTo}.txt`);
+    await writeFile(file, `To: ${message.to}\nSubject: ${message.subject}\n\n${message.text}\n`, "utf8");
+    console.log(JSON.stringify({ level: "info", msg: "correo de desarrollo (sin RESEND_API_KEY)", to: message.to, subject: message.subject, file }));
+  }
+}
+
+export function createMailer(env: Env): MailerPort {
+  return env.RESEND_API_KEY ? new ResendMailer(env) : new DevMailer(env);
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);

@@ -3,7 +3,7 @@ import { Alert, Badge, Button, Card, Dialog, EmptyState, Field, Input, Select, T
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, ExternalLink, Link2, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { LoadingBlock, PageHeader, QueryError } from "../components/shell";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { formatDateTime, VISIBILITY_LABEL } from "../lib/format";
@@ -31,6 +31,7 @@ interface EntryState {
 
 export default function Compartir() {
   const { id = "" } = useParams();
+  const [search] = useSearchParams();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: qk.draft(id), queryFn: ({ signal }) => api.publications.draft(id, { signal }) });
   const d = q.data;
@@ -51,24 +52,25 @@ export default function Compartir() {
   // Precarga: la selección vigente de la publicación (si existe) o valores seguros por omisión.
   useEffect(() => {
     if (!d) return;
-    const key = `${d.publication?.revision ?? 0}:${d.candidates.length}`;
+    const key = `${d.publication?.revision ?? 0}:${d.candidates.length}:${search.toString()}`;
     if (initFor === key) return;
     setInitFor(key);
     const cur = d.publication?.current;
     setTitle(cur?.title ?? d.journeyTitle);
     setDescription(cur?.description ?? "");
-    setVisibility(cur?.visibility && cur.visibility !== "PRIVATE" ? cur.visibility : d.publication?.visibility && d.publication.visibility !== "PRIVATE" ? d.publication.visibility : "PUBLIC");
+    const preferred = search.get("visibilidad");
+    setVisibility(preferred === "UNLISTED" || preferred === "PUBLIC" || preferred === "PRIVATE" ? preferred : cur?.visibility && cur.visibility !== "PRIVATE" ? cur.visibility : d.publication?.visibility && d.publication.visibility !== "PRIVATE" ? d.publication.visibility : "UNLISTED");
     setLocationLabel(cur?.locationLabel ?? "");
     setTransportSummary(cur?.transportSummary ?? "");
     setCover(cur?.coverAssetId ?? null);
-    setExactTrack(cur?.shareExactTrack ?? false);
+    setExactTrack(search.has("ocultarTrayecto") ? search.get("ocultarTrayecto") === "0" : cur?.shareExactTrack ?? false);
     const next: Record<string, EntryState> = {};
     for (const c of d.candidates) {
       const prev = cur?.entries.find((e) => e.visitId === c.visitId);
       next[c.visitId] = { include: cur ? Boolean(prev) : true, includeNote: prev?.includeNote ?? false, precision: prev?.locationPrecision ?? "EXACT", assets: new Set(prev ? prev.media.map((m) => m.assetId) : c.media.map((m) => m.id)) };
     }
     setEntries(next);
-  }, [d, initFor]);
+  }, [d, initFor, search]);
 
   const selectedCount = Object.values(entries).filter((e) => e.include).length;
   const photoCount = Object.values(entries).filter((e) => e.include).reduce((a, e) => a + e.assets.size, 0);

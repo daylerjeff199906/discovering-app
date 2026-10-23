@@ -1,9 +1,10 @@
-# Despliegue de referencia (UN solo host). Sustituye PostgreSQL/Redis/S3/SMTP por servicios gestionados si los tienes.
+# Despliegue de referencia (UN solo host). Sustituye PostgreSQL/Redis por servicios gestionados si los tienes. Archivos en Cloudflare R2 y correo con Resend.
 # Uso:
 #   docker compose -f infra/compose.yaml -f infra/compose.prod.yaml --env-file .env.production up -d --build
 #   (las migraciones corren UNA vez por release en el servicio `migrate`, no en cada réplica)
 # Requiere .env.production con APP_ENV=production, COOKIE_SECURE=true, SITE_ADDRESS=tu.dominio, TRUST_PROXY=true,
-# APP_ENCRYPTION_KEY propia, DATABASE_URL=postgres://…@postgres:5432/…, REDIS_URL=redis://redis:6379, S3_ENDPOINT=http://minio:9000, …
+# APP_ENCRYPTION_KEY propia, DATABASE_URL=postgres://…@postgres:5432/…, REDIS_URL=redis://redis:6379,
+# R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET y RESEND_API_KEY, …
 name: por-aqui-prod
 
 services:

@@ -16,7 +16,7 @@ function filtersFrom(url: URL): Partial<ExploreQuery> {
   return {
     limit: 12,
     q: p.get("q") || undefined,
-    destination: p.get("destino") || undefined,
+    destination: p.get("destino") || "Iquitos",
     interest: p.get("interes") || undefined,
     transport: transport && (TRANSPORT_MODES as readonly string[]).includes(transport) ? (transport as TransportMode) : undefined,
   };
@@ -31,10 +31,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   const f = loaderData?.filters;
-  const filtered = f && (f.q || f.destination || f.interest || f.transport);
+  const filtered = f && (f.q || (f.destination && f.destination !== "Iquitos") || f.interest || f.transport);
   return seoMeta({
-    title: filtered ? "Resultados de recorridos — Por aquí" : "Explorar recorridos — Por aquí",
-    description: "Recorridos públicos compartidos por la comunidad: paradas, fotos y notas de personas que ya los hicieron.",
+    title: filtered ? "Resultados de recorridos — Por aquí" : "Explorar Iquitos — Por aquí",
+    description: "Descubre Iquitos con los recorridos de la comunidad: lugares, fotos y notas para inspirar tu próxima aventura.",
     canonical: `${siteUrl()}/explorar`,
     noindex: Boolean(filtered),
   });
@@ -83,10 +83,10 @@ export default function Explorar({ loaderData }: Route.ComponentProps) {
   const interests = useQuery(interestsQuery());
   return (
     <HydrationBoundary state={loaderData.dehydrated}>
-      <PageHeader title="Explorar recorridos" subtitle="Historias públicas de la comunidad. Guarda las que te inspiren o úsalas como base para armar la tuya." />
+      <PageHeader title="Explorar Iquitos" subtitle="Historias y recorridos de Iquitos. Guarda los que te inspiren o úsalos como base para armar el tuyo." />
       <Form method="get" role="search" className="mb-8 grid gap-4 rounded-card border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1.4fr_1.2fr_1.2fr_auto] lg:items-end">
         <Field label="Buscar">{(c) => <Input {...c} name="q" type="search" defaultValue={filters.q} placeholder="Título, lugar o tema" />}</Field>
-        <Field label="Destino">{(c) => <Input {...c} name="destino" defaultValue={filters.destination} placeholder="Iquitos, Lisboa…" />}</Field>
+        <Field label="Destino">{(c) => <Input {...c} name="destino" defaultValue={filters.destination} placeholder="Iquitos, Loreto…" />}</Field>
         <Field label="Interés">
           {(c) => (
             <Select {...c} name="interes" defaultValue={filters.interest ?? ""}>

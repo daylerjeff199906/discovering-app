@@ -8,12 +8,51 @@ Ver el [README](../README.md#puesta-en-marcha-desde-cero). Variables en `.env` (
 |---|---|
 | Compartidas | `NODE_ENV`, `APP_ENV` (`development`/`demo`/`production`) |
 | API | `API_PORT`, `DATABASE_URL`, `REDIS_URL`, `WEB_ORIGIN`, `ALLOWED_ORIGINS`, `PUBLIC_SITE_URL`, `TRUST_PROXY`, `COOKIE_SECURE`, `SESSION_*`, `APP_ENCRYPTION_KEY`, `RATE_LIMIT_ENABLED` |
-| Almacenamiento | `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `UPLOAD_URL_TTL_SECONDS`, `MEDIA_*` |
-| Correo | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` |
+| Archivos (Cloudflare R2) | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT` (opcional), `UPLOAD_URL_TTL_SECONDS`, `MEDIA_*` |
+| Correo (Resend) | `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_REPLY_TO` (opcional), `DEV_MAIL_DIR` |
 | Geo | `ROUTING_PROVIDER` (`none`/`osrm`/`fixture`), `OSRM_BASE_URL`, `GEOCODER_PROVIDER`, `NOMINATIM_BASE_URL`, `GEO_USER_AGENT` |
 | Web | `WEB_PORT`, `API_INTERNAL_URL` (SSR→API), `PUBLIC_SITE_URL`, `VITE_MAP_TILES_URL`, `VITE_MAP_ATTRIBUTION`, `VITE_DEMO_BANNER` |
 
 El entorno se valida con Zod al arrancar y falla con un mensaje claro. **Genera tu propia `APP_ENCRYPTION_KEY`** (`openssl rand -base64 32`).
+
+### Cloudflare R2 (archivos)
+
+1. En Cloudflare → **R2** → *Create bucket* (privado; **no** actives el acceso público ni el dominio `r2.dev`). Ese nombre es `R2_BUCKET`.
+2. `R2_ACCOUNT_ID`: en la página de R2, barra lateral derecha (*Account ID*).
+3. **Manage R2 API Tokens → Create API token** con permiso *Object Read & Write* limitado a ese bucket. Copia `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` (solo se muestran una vez). Con *Admin Read & Write* también valdría, pero no hace falta.
+4. **CORS del bucket** (Settings → CORS Policy). El navegador sube directo a R2 con una URL PUT firmada, así que R2 debe aceptar tu origen:
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:5173", "https://tu.dominio"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Sin las cuatro variables `R2_*` la app arranca, pero subir o ver fotos responde 503 (`STORAGE_NOT_CONFIGURED`). En producción son obligatorias.
+
+**Estructura dentro del bucket** (una carpeta por perfil):
+
+```text
+users/{userId}/avatar/{assetId}/original            foto de perfil subida (nunca se sirve)
+users/{userId}/avatar/{assetId}/v1/{thumb,display}.webp
+users/{userId}/places/{placeId}/{assetId}/original  fotos de visitas, agrupadas por lugar
+users/{userId}/places/{placeId}/{assetId}/v1/{thumb,display}.webp
+```
+
+El código está en `apps/api/src/infrastructure/storage/keys.ts`; para otro tipo de contenido (banner de perfil, portadas…) se añade una carpeta allí.
+
+**Borrado coherente con la base de datos.** Cuando una fila de `media_assets` se elimina (foto, visita, viaje, avatar reemplazado, cuenta), la misma transacción registra un evento del *outbox* y el worker borra de R2 la carpeta completa del archivo (original y todas sus versiones). Al borrar la cuenta se borra `users/{userId}/`. Como red de seguridad, cada 6 h el worker compara R2 con la base de datos y elimina los objetos de `users/…` sin fila (ignora lo de la última hora). Los archivos de una publicación no se borran hasta retirarla (409 `MEDIA_IN_PUBLICATION`).
+
+### Resend (correo)
+
+1. <https://resend.com> → **API Keys** → crea una clave → `RESEND_API_KEY`.
+2. Para enviar a cualquier destinatario, verifica tu dominio (**Domains**) y usa un remitente de ese dominio en `MAIL_FROM` (p. ej. `"Por aquí <no-reply@tu.dominio>"`). Mientras tanto `onboarding@resend.dev` solo envía a la dirección de tu propia cuenta de Resend.
+3. Sin `RESEND_API_KEY` (solo fuera de producción) el worker guarda cada correo como `.txt` en `.dev-mail/` (con el enlace) y lo escribe en su log. En producción la clave es obligatoria.
 
 ### Mapas
 
@@ -32,7 +71,7 @@ Sin `ROUTING_PROVIDER` los traslados quedan «Por definir»; sin `GEOCODER_PROVI
 1. **Imágenes**: `infra/Dockerfile.api` (API y worker, mismo código con otro comando) y `infra/Dockerfile.web`. Construye con la raíz del repo como contexto: `docker build -f infra/Dockerfile.api -t poraqui-api .`
 2. **Origen único**: `infra/Caddyfile` enruta `/api/*` → `api:4000` y el resto → `web:3000`; Caddy gestiona TLS. Configura `COOKIE_SECURE=true`, `WEB_ORIGIN`/`ALLOWED_ORIGINS`/`PUBLIC_SITE_URL` con tu dominio y `TRUST_PROXY=true` detrás del proxy.
 3. **Migraciones**: ejecútalas **una vez por release** (`node` o `pnpm db:migrate` desde el job de despliegue), nunca desde cada réplica.
-4. **Servicios**: PostgreSQL con PostGIS gestionado, Redis, almacenamiento S3 **privado** (sin política pública), SMTP transaccional.
+4. **Servicios**: PostgreSQL con PostGIS gestionado, Redis, archivos en **Cloudflare R2** (bucket privado, sin acceso público) y correo con **Resend**.
 5. **Observabilidad**: `GET /api/v1/health/live` y `/health/ready`; logs JSON con `requestId` (el patrón de ruta se registra, no la URL, para no guardar tokens).
 6. **Respaldos**: ver [DATABASE.md](DATABASE.md#backups-y-restauración).
 

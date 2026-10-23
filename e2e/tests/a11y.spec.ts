@@ -32,7 +32,7 @@ test("accesibilidad (axe) en el editor, el recorrido, la visita y compartir", as
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await audit(page, "/app/viajes/nuevo");
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("textbox", { name: "Destino" }).fill("Iquitos");
+  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();

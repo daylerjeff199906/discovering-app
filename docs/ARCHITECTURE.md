@@ -6,7 +6,7 @@ Monolito modular: **dos procesos del mismo producto** (web SSR y API/worker Nest
 Navegador ──► origen único (:5173 en dev / Caddy en prod)
                  ├─ /api/v1/*  ──► NestJS (permisos, validación, negocio)  ──► PostgreSQL+PostGIS
                  │                         ├─ outbox_events ─► dispatcher ─► BullMQ/Redis ─► worker
-                 │                         └─ S3 privado (MinIO en dev)                       ├─ email (SMTP/Mailpit)
+                 │                         └─ Cloudflare R2 (privado)                         ├─ email (Resend)
                  └─ resto      ──► React Router SSR (solo presenta)                           ├─ fotos (sharp)
                                         └─ loaders ──► API por URL interna (sin cookies de usuario)  └─ purga de cuenta
 ```

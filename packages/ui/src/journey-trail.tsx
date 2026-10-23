@@ -47,6 +47,7 @@ export function JourneyTrail({
   ariaLabel = "Recorrido",
   className,
   wrapCard,
+  variant = "card",
 }: {
   items: TrailItem[];
   selectedId?: string | null;
@@ -58,6 +59,7 @@ export function JourneyTrail({
   className?: string;
   /** Permite envolver cada tarjeta (p. ej. para registrarla como destino de arrastre sin acoplar la librería). */
   wrapCard?: (item: TrailItem, card: ReactNode) => ReactNode;
+  variant?: "card" | "diary";
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef(new Map<string, HTMLElement>());
@@ -107,10 +109,10 @@ export function JourneyTrail({
   }
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div ref={containerRef} className={cn("journey-trail relative", className)}>
       <svg aria-hidden="true" focusable="false" className="pointer-events-none absolute inset-0 text-primary" width={size.w || "100%"} height={size.h || "100%"} viewBox={size.w ? `0 0 ${size.w} ${size.h}` : undefined}>
         {segments.map((s) => (
-          <path key={s.key} d={s.d} fill="none" stroke="currentColor" strokeWidth={s.solid ? 3 : 2.5} strokeLinecap="round" strokeDasharray={s.solid ? undefined : "1 8"} opacity={s.solid ? 0.9 : 0.55} />
+          <path key={s.key} d={s.d} fill="none" stroke="currentColor" strokeWidth={s.solid ? 2 : 1.4} strokeLinecap="round" strokeDasharray={s.solid ? undefined : "4 6"} opacity={s.solid ? 0.9 : 0.7} />
         ))}
       </svg>
 
@@ -133,14 +135,14 @@ export function JourneyTrail({
                   item.state === "pending" && "border-2 border-dashed border-control-border bg-surface text-muted-foreground",
                 )}
               >
-                {item.state === "visited" ? <CheckIcon /> : i + 1}
+                {item.state === "visited" && variant !== "diary" ? <CheckIcon /> : i + 1}
                 <span className="sr-only"> — {STATE_LABEL[item.state]}</span>
               </span>
 
               {(() => {
                 const card = (
-              <div className={cn("rounded-card border bg-surface p-4 shadow-card transition-colors duration-150", selected ? "border-primary ring-1 ring-primary" : "border-border")}>
-                  <div className={cn("flex flex-col gap-4", item.media?.length ? "sm:flex-row" : "", flip && "sm:flex-row-reverse")}>
+              <div className={cn("trail-stop rounded-card border bg-surface p-5 shadow-card transition-colors duration-150", selected ? "border-primary ring-1 ring-primary" : "border-border")}>
+                  <div className={cn("flex flex-col gap-4", item.media?.length && variant !== "diary" ? "sm:flex-row" : "", flip && variant !== "diary" && "sm:flex-row-reverse")}>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         {onSelect ? (
@@ -155,10 +157,11 @@ export function JourneyTrail({
                         </span>
                       </div>
                       {item.subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{item.subtitle}</p> : null}
+                      {variant === "diary" && item.media?.length ? <ul className="diary-entry-photos">{item.media.slice(0, 4).map((m, mi) => <li key={m.src}><button type="button" disabled={!onMediaClick} onClick={() => onMediaClick?.(item.id, mi)} aria-label={`Ver foto: ${m.alt}`}><img src={m.src} alt={m.alt} loading="lazy" width={300} height={200} /></button></li>)}</ul> : null}
                       {item.note ? <div className="mt-2 whitespace-pre-wrap text-[0.95rem]">{item.note}</div> : null}
                       {item.actions ? <div className="mt-3 flex flex-wrap items-center gap-2">{item.actions}</div> : null}
                     </div>
-                    {item.media?.length ? (
+                    {item.media?.length && variant !== "diary" ? (
                       <ul className={cn("m-0 grid shrink-0 list-none gap-2 p-0", item.media.length === 1 ? "grid-cols-1 sm:w-44" : "grid-cols-2 sm:w-60")}>
                         {item.media.slice(0, 4).map((m, mi) => (
                           <li key={m.src}>

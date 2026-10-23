@@ -32,8 +32,6 @@ export interface SeedPlace {
 }
 
 const IQ = { countryCode: "PE", region: "Loreto", locality: "Iquitos", timezone: "America/Lima" };
-const CU = { countryCode: "PE", region: "Cusco", locality: "Cusco", timezone: "America/Lima" };
-const LX = { countryCode: "PT", region: "Lisboa", locality: "Lisboa", timezone: "Europe/Lisbon" };
 
 export const PLACES: SeedPlace[] = [
   { key: "iq-plaza-armas", name: "Plaza de Armas de Iquitos", description: "Plaza central de la ciudad, punto de partida habitual de los recorridos.", lng: -73.2538, lat: -3.7491, interests: ["historia", "arquitectura", "cultura"], minutes: 30, ...IQ },
@@ -45,18 +43,4 @@ export const PLACES: SeedPlace[] = [
   { key: "iq-rescate-amazonico", name: "Centro de Rescate Amazónico", description: "Centro de rescate de fauna en la carretera Iquitos–Nauta.", lng: -73.279, lat: -3.808, interests: ["fauna", "naturaleza"], minutes: 90, ...IQ },
   { key: "iq-quistococha", name: "Laguna de Quistococha", description: "Laguna y complejo turístico al sur de la ciudad.", lng: -73.2137, lat: -3.8313, interests: ["naturaleza", "relax", "fauna"], minutes: 150, ...IQ },
 
-  { key: "cu-plaza-armas", name: "Plaza de Armas del Cusco", description: "Plaza principal del centro histórico.", lng: -71.9786, lat: -13.5167, interests: ["historia", "arquitectura", "cultura"], minutes: 40, ...CU },
-  { key: "cu-catedral", name: "Catedral del Cusco", description: "Catedral en la Plaza de Armas.", lng: -71.9789, lat: -13.517, interests: ["arquitectura", "historia"], minutes: 45, ...CU },
-  { key: "cu-qorikancha", name: "Qorikancha", description: "Sitio inca bajo el convento de Santo Domingo.", lng: -71.9753, lat: -13.5192, interests: ["historia", "museos", "arquitectura"], minutes: 60, ...CU },
-  { key: "cu-san-pedro", name: "Mercado de San Pedro", description: "Mercado central de la ciudad.", lng: -71.9842, lat: -13.5217, interests: ["mercados", "gastronomia"], minutes: 60, ...CU },
-  { key: "cu-san-blas", name: "Barrio de San Blas", description: "Barrio de calles empinadas con talleres artesanales.", lng: -71.9741, lat: -13.5148, interests: ["cultura", "fotografia"], minutes: 75, ...CU },
-  { key: "cu-sacsayhuaman", name: "Sacsayhuamán", description: "Complejo arqueológico sobre la ciudad.", lng: -71.9818, lat: -13.5086, interests: ["historia", "aventura", "fotografia"], minutes: 120, ...CU },
-
-  { key: "lx-praca-comercio", name: "Praça do Comércio", description: "Plaza abierta al río Tajo.", lng: -9.1364, lat: 38.7076, interests: ["arquitectura", "historia", "fotografia"], minutes: 30, ...LX },
-  { key: "lx-castelo", name: "Castelo de São Jorge", description: "Castillo sobre la colina con vistas a la ciudad.", lng: -9.1335, lat: 38.7139, interests: ["historia", "fotografia"], minutes: 90, ...LX },
-  { key: "lx-miradouro-monte", name: "Miradouro da Senhora do Monte", description: "Mirador en una de las colinas de Lisboa.", lng: -9.1326, lat: 38.72, interests: ["fotografia", "relax"], minutes: 30, ...LX },
-  { key: "lx-time-out", name: "Mercado da Ribeira", description: "Mercado y espacio gastronómico.", lng: -9.1455, lat: 38.7068, interests: ["gastronomia", "mercados"], minutes: 60, ...LX },
-  { key: "lx-lx-factory", name: "LX Factory", description: "Antiguo complejo industrial reconvertido en espacio creativo.", lng: -9.1779, lat: 38.7036, interests: ["cultura", "arquitectura"], minutes: 75, ...LX },
-  { key: "lx-jeronimos", name: "Mosteiro dos Jerónimos", description: "Monasterio en el barrio de Belém.", lng: -9.2068, lat: 38.6979, interests: ["arquitectura", "historia"], minutes: 75, ...LX },
-  { key: "lx-torre-belem", name: "Torre de Belém", description: "Torre fortificada junto al río Tajo.", lng: -9.216, lat: 38.6916, interests: ["historia", "fotografia"], minutes: 45, ...LX },
 ];

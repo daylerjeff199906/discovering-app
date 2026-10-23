@@ -23,6 +23,9 @@ export default [
   // Privadas: shell en servidor, datos en cliente
   layout("routes/layout-app.tsx", [
     route("bienvenida", "routes/bienvenida.tsx"),
+    route("app", "routes/app.inicio-redirect.tsx"),
+    route("app/inicio", "routes/app.inicio.tsx"),
+    route("app/catalogo", "routes/app.catalogo.tsx"),
     route("app/viajes", "routes/app.viajes.tsx"),
     route("app/guardados", "routes/app.guardados.tsx"),
     route("app/viajes/nuevo", "routes/app.viajes.nuevo.tsx"),

@@ -12,6 +12,7 @@ export const journeyStatusSchema = z.enum(JOURNEY_STATUSES);
 export type JourneyStatus = z.infer<typeof journeyStatusSchema>;
 
 export const journeyPreferencesSchema = z.object({
+  explorationMode: z.enum(["FOLLOW_ROUTE", "FREE"]).optional(),
   interests: z.array(z.string().max(40)).max(20).default([]),
   availableMinutesPerDay: z.number().int().min(30).max(1440).optional(),
   pace: paceSchema.default("MODERATE"),
@@ -108,6 +109,7 @@ export const journeySummaryDtoSchema = z.object({
   updatedAt: z.string(),
   publicationSlug: z.string().nullable(),
   publicationVisibility: z.enum(["PRIVATE", "UNLISTED", "PUBLIC"]).nullable(),
+  coverUrl: z.string().nullable().optional(),
 });
 export type JourneySummaryDto = z.infer<typeof journeySummaryDtoSchema>;
 

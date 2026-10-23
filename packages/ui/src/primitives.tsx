@@ -14,7 +14,7 @@ const variants: Record<ButtonVariant, string> = {
   danger: "bg-danger text-white hover:bg-[#962d29]",
 };
 const sizes: Record<ButtonSize, string> = {
-  md: "min-h-11 px-5 py-2.5 text-base",
+  md: "min-h-12 px-6 py-3 text-[0.9375rem]",
   sm: "min-h-10 px-3.5 py-2 text-sm",
   icon: "size-11",
 };
@@ -22,7 +22,7 @@ const sizes: Record<ButtonSize, string> = {
 /** Clases de botón reutilizables para enlaces (`<Link className={buttonClass(...)}>`). */
 export function buttonClass({ variant = "primary", size = "md", className }: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {}) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-control font-semibold no-underline transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-70 aria-disabled:opacity-70",
+    "inline-flex items-center justify-center gap-2 rounded-control font-medium no-underline transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-70 aria-disabled:opacity-70",
     variants[variant],
     sizes[size],
     className,
@@ -50,7 +50,7 @@ export function Spinner({ className, label }: { className?: string; label?: stri
 /* ───────────── Formularios ───────────── */
 
 const controlBase =
-  "w-full min-h-11 rounded-control border border-control-border bg-surface px-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:bg-surface-muted aria-invalid:border-danger aria-invalid:border-2";
+  "w-full min-h-12 rounded-control border border-control-border bg-surface px-4 py-3 text-base text-foreground placeholder:text-muted-foreground transition-colors hover:border-primary/60 focus:border-primary disabled:cursor-not-allowed disabled:bg-surface-muted aria-invalid:border-danger aria-invalid:border-2";
 
 export function Input({ className, invalid, ...rest }: ComponentPropsWithRef<"input"> & { invalid?: boolean }) {
   return <input className={cn(controlBase, className)} aria-invalid={invalid || undefined} {...rest} />;
@@ -126,7 +126,7 @@ export function Alert({ tone = "neutral", title, children, className, live = "po
 
 export function EmptyState({ title, children, action, icon }: { title: ReactNode; children?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-control-border bg-surface px-6 py-12 text-center">
+    <div className="empty-state flex flex-col items-center gap-4 rounded-card border border-border bg-surface px-6 py-16 text-center">
       {icon ? <div className="text-primary" aria-hidden="true">{icon}</div> : null}
       <h2 className="text-xl">{title}</h2>
       {children ? <p className="max-w-md text-muted-foreground">{children}</p> : null}

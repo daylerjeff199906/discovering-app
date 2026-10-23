@@ -3,6 +3,7 @@ import { loginInputSchema, safeReturnTo, type LoginInput } from "@por-aqui/contr
 import { Alert, Button, Field, Input } from "@por-aqui/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import { ArrowRight, Compass } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { FormError, PasswordInput } from "../components/forms";
 import { api } from "../lib/api";
@@ -16,7 +17,7 @@ export function meta(_: Route.MetaArgs) {
 
 export default function Ingresar() {
   const [params] = useSearchParams();
-  const returnTo = safeReturnTo(params.get("returnTo"));
+  const returnTo = safeReturnTo(params.get("returnTo"), "/app/inicio");
   const navigate = useNavigate();
   const qc = useQueryClient();
   const form = useForm<LoginInput>({ resolver: zodResolver(loginInputSchema), defaultValues: { email: "", password: "" } });
@@ -30,18 +31,18 @@ export default function Ingresar() {
   const { errors } = form.formState;
   return (
     <form onSubmit={form.handleSubmit((v) => m.mutate(v))} noValidate className="flex flex-col gap-4">
-      <h1 className="text-2xl">Ingresar</h1>
+      <p className="eyebrow auth-step-label"><Compass size={16} strokeWidth={1.5} aria-hidden="true" /> Tu siguiente aventura te espera</p>
+      <h1>Qué bueno verte<br /><em>por aquí.</em></h1>
+      <p className="auth-intro">Ingresa a tu cuenta y sigue escribiendo tu historia.</p>
       {params.get("verificado") ? <Alert tone="success" title="Correo confirmado">Ya puedes ingresar y publicar tus recorridos.</Alert> : null}
       {params.get("clave") ? <Alert tone="success" title="Contraseña actualizada">Inicia sesión con tu nueva contraseña.</Alert> : null}
-      {returnTo !== "/app/viajes" ? <p className="text-sm text-muted-foreground">Ingresa para continuar con lo que estabas haciendo.</p> : null}
-      <Field label="Correo electrónico" error={errors.email?.message}>{(c) => <Input {...c} type="email" autoComplete="email" {...form.register("email")} />}</Field>
-      <Field label="Contraseña" error={errors.password?.message}>{(c) => <PasswordInput {...c} autoComplete="current-password" {...form.register("password")} />}</Field>
+      {returnTo !== "/app/inicio" ? <p className="text-sm text-muted-foreground">Ingresa para continuar con lo que estabas haciendo.</p> : null}
+      <Field label="Correo electrónico" error={errors.email?.message}>{(c) => <Input {...c} type="email" placeholder="tu@correo.com" autoComplete="email" {...form.register("email")} />}</Field>
+      <Field label="Contraseña" error={errors.password?.type === "too_small" ? "Ingresa tu contraseña." : errors.password?.message}>{(c) => <PasswordInput {...c} autoComplete="current-password" {...form.register("password")} />}</Field>
       <FormError error={m.error} />
-      <Button type="submit" loading={m.isPending}>Ingresar</Button>
-      <div className="flex flex-wrap justify-between gap-2 text-sm">
-        <Link to="/recuperar-cuenta" className="font-semibold">¿Olvidaste tu contraseña?</Link>
-        <Link to={`/registro?returnTo=${encodeURIComponent(returnTo)}`} className="font-semibold">Crear cuenta</Link>
-      </div>
+      <Link to="/recuperar-cuenta" className="-mt-2 self-end text-xs font-medium">¿Olvidaste tu contraseña?</Link>
+      <Button type="submit" loading={m.isPending}>Ingresar <ArrowRight size={17} aria-hidden="true" /></Button>
+      <p className="auth-account-link auth-divider">¿Aún no tienes cuenta? <Link to={`/registro?returnTo=${encodeURIComponent(returnTo)}`} className="font-semibold">Empieza tu historia</Link></p>
     </form>
   );
 }

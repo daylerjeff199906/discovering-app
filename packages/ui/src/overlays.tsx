@@ -88,7 +88,7 @@ export function Tabs({ tabs, value, onChange, label, className }: { tabs: TabDef
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(t.id)}
             onKeyDown={(e) => onKey(e, i)}
-            className={cn("min-h-10 rounded-[10px] px-4 text-sm font-semibold transition-colors", active ? "bg-surface text-primary shadow-card" : "text-muted-foreground hover:text-foreground")}
+            className={cn("min-h-11 rounded-[10px] px-4 text-sm font-medium transition-colors", active ? "bg-sage text-primary" : "text-muted-foreground hover:text-foreground")}
           >
             {t.label}
           </button>

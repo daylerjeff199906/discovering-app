@@ -18,10 +18,10 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
   await page.setViewportSize({ width: 1440, height: 900 });
   await signUpVerifyLogin(page, "pantallas");
 
-  // Viaje automático (Cusco) con propuesta aplicada
+  // Viaje automático (Iquitos) con propuesta aplicada
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("textbox", { name: "Destino" }).fill("Cusco");
+  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
@@ -64,7 +64,7 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
       await expectNoHorizontalOverflow(page);
       if (name === "editor" && width === 1024) {
         // Sin tres columnas forzadas en tablet: la columna de preferencias se apila sobre el recorrido
-        const prefs = await page.getByRole("heading", { name: "Preferencias" }).boundingBox();
+        const prefs = await page.getByRole("heading", { name: "A tu manera" }).boundingBox();
         const plan = await page.getByRole("region", { name: "Plan del viaje" }).or(page.getByLabel("Plan del viaje")).first().boundingBox();
         expect(prefs && plan && prefs.y < plan.y).toBeTruthy();
       }

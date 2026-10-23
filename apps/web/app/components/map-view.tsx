@@ -69,7 +69,10 @@ export default function MapView({ markers, lines = [], selectedId, onSelect, onM
     map.once("style.load", () => setReady(true));
     map.on("click", (e) => clickRef.current?.({ lng: e.lngLat.lng, lat: e.lngLat.lat }));
     map.on("error", () => undefined);
+    const resize = new ResizeObserver(() => { if (container.current?.clientWidth) map.resize(); });
+    resize.observe(container.current);
     return () => {
+      resize.disconnect();
       map.remove();
       mapRef.current = null;
       setReady(false);

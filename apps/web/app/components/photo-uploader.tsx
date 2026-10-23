@@ -2,7 +2,7 @@ import type { AssetDto } from "@por-aqui/contracts";
 import { uploadToStorage } from "@por-aqui/api-client";
 import { Alert, Button, Lightbox, ProgressBar } from "@por-aqui/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, RotateCcw, Trash2 } from "lucide-react";
+import { Camera, Plus, Upload as UploadIcon, RotateCcw, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { capabilitiesQuery } from "../lib/query";
@@ -33,6 +33,7 @@ export function PhotoUploader({ visitId, assets, onChanged, disabled }: { visitI
   const caps = useQuery(capabilitiesQuery());
   const qc = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -97,16 +98,15 @@ export function PhotoUploader({ visitId, assets, onChanged, disabled }: { visitI
   const images = ready.map((a) => ({ src: a.displayUrl!, alt: a.caption ?? "Foto de la visita", caption: a.caption }));
 
   return (
-    <section aria-labelledby="fotos" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="fotos" className="text-xl">Fotos</h2>
-        <div>
-          <input ref={input} type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" id="photo-input" aria-label="Elegir fotos de la visita" tabIndex={-1} onChange={(e) => { add(e.target.files); e.target.value = ""; }} disabled={disabled} />
-          <Button variant="secondary" size="sm" disabled={disabled} onClick={() => input.current?.click()}><ImagePlus className="size-4" aria-hidden="true" /> Añadir fotos</Button>
-        </div>
-      </div>
-      <p className="text-sm text-muted-foreground">JPEG, PNG o WebP · hasta {Math.round((caps.data?.media.maxBytes ?? 10485760) / 1048576)} MB y {caps.data?.media.maxPerVisit ?? 20} fotos por visita. Quitamos la ubicación (EXIF) de las copias que se muestran.</p>
-
+    <section aria-labelledby="fotos" className="visit-photo-component flex flex-col gap-3">
+      <div className="visit-photo-heading"><h2 id="fotos">Fotos de tu visita</h2><span>{ready.length} de {caps.data?.media.maxPerVisit ?? 20}</span></div>
+      <input ref={input} type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Elegir fotos de la visita" tabIndex={-1} onChange={(e) => { add(e.target.files); e.target.value = ""; }} disabled={disabled} />
+      <input ref={camera} type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Tomar foto de la visita" tabIndex={-1} disabled={disabled} onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
+      <ul className="visit-photo-strip">{ready.map((asset,i) => <li key={asset.id}><button type="button" className="visit-photo-preview" onClick={() => setLightbox(i)} aria-label={'Ver foto ' + (i + 1)}><img src={asset.thumbUrl!} alt={asset.caption ?? 'Foto ' + (i + 1)} width={160} height={145} /></button><button type="button" disabled={disabled} aria-label={'Eliminar foto ' + (i + 1)} title="Eliminar foto" onClick={() => void remove(asset)}><Trash2 size={15} aria-hidden="true" /></button></li>)}
+        {ready.length < (caps.data?.media.maxPerVisit ?? 20) ? <li><button type="button" className="visit-photo-add" aria-label="Añadir fotos" disabled={disabled} onClick={() => input.current?.click()}><Plus size={28} strokeWidth={1.3} aria-hidden="true" /></button></li> : null}
+      </ul>
+      <div className="visit-photo-buttons"><Button variant="secondary" disabled={disabled} onClick={() => camera.current?.click()}><Camera size={18} aria-hidden="true" />Tomar foto</Button><Button variant="outline" disabled={disabled} onClick={() => input.current?.click()}><UploadIcon size={18} aria-hidden="true" />Subir fotos</Button></div>
+      <p className="text-xs text-muted-foreground">JPEG, PNG o WebP · hasta {Math.round((caps.data?.media.maxBytes ?? 10485760) / 1048576)} MB por foto.</p>
       {uploads.length > 0 ? (
         <ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label="Subidas en curso">
           {uploads.map((u) => (
@@ -139,21 +139,6 @@ export function PhotoUploader({ visitId, assets, onChanged, disabled }: { visitI
       ))}
       {deleteError ? <Alert tone="warning" live="assertive">{deleteError}</Alert> : null}
 
-      {ready.length === 0 && uploads.length === 0 ? <p className="rounded-card border border-dashed border-control-border p-5 text-center text-sm text-muted-foreground">Esta visita aún no tiene fotos. Son opcionales.</p> : null}
-      {ready.length > 0 ? (
-        <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-4">
-          {ready.map((a, i) => (
-            <li key={a.id} className="group relative overflow-hidden rounded-control bg-surface-muted">
-              <button type="button" onClick={() => setLightbox(i)} className="block w-full" aria-label={`Ver foto ${i + 1} de ${ready.length}`}>
-                <img src={a.thumbUrl!} alt={a.caption ?? `Foto ${i + 1}`} loading="lazy" width={240} height={180} className="aspect-[4/3] w-full object-cover" />
-              </button>
-              <button type="button" onClick={() => void remove(a)} aria-label={`Eliminar foto ${i + 1}`} className="absolute right-1.5 top-1.5 inline-flex size-9 items-center justify-center rounded-full bg-surface/90 text-danger shadow-card hover:bg-surface">
-                <Trash2 className="size-4" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
       <Lightbox images={images} index={lightbox} onClose={() => setLightbox(null)} onIndex={setLightbox} />
     </section>
   );

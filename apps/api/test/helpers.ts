@@ -9,6 +9,7 @@ import { createApp } from "../src/bootstrap";
 import { ENV, type Env } from "../src/config/env";
 import { MailerPort } from "../src/infrastructure/mail/mailer";
 import { StoragePort } from "../src/infrastructure/storage/storage";
+import { memoryMailer, memoryStorage } from "./fakes";
 import { DB, QUEUES, type QueueMap } from "../src/infrastructure/tokens";
 import { MediaService } from "../src/modules/media/media.service";
 import { OutboxHandlers } from "../src/worker/outbox.handlers";
@@ -139,20 +140,12 @@ export async function jpegWithExif(width = 800, height = 600): Promise<Buffer> {
     .toBuffer();
 }
 
-/** Sube un archivo con el POST prefirmado, como haría el navegador. */
-export async function uploadToStorage(auth: { url: string; fields: Record<string, string> }, data: Buffer, mime: string): Promise<number> {
-  const form = new FormData();
-  for (const [k, v] of Object.entries(auth.fields)) form.append(k, v);
-  form.append("file", new Blob([new Uint8Array(data)], { type: mime }));
-  const res = await fetch(auth.url, { method: "POST", body: form });
-  return res.status;
+/** Sube un archivo con la URL PUT prefirmada, como haría el navegador (contra el almacenamiento en memoria). */
+export async function uploadToStorage(auth: { url: string; headers: Record<string, string> }, data: Buffer, mime: string): Promise<number> {
+  return memoryStorage.receive(auth.url, { ...auth.headers, "Content-Type": mime }, data);
 }
 
 export async function mailTo(email: string): Promise<{ text: string; subject: string } | null> {
-  const base = `http://localhost:${process.env.MAILPIT_UI_PORT ?? 8030}`;
-  const list = (await (await fetch(`${base}/api/v1/search?query=${encodeURIComponent("to:" + email)}`)).json()) as { messages: { ID: string; Subject: string }[] };
-  const first = list.messages[0];
-  if (!first) return null;
-  const msg = (await (await fetch(`${base}/api/v1/message/${first.ID}`)).json()) as { Text: string; Subject: string };
-  return { text: msg.Text, subject: msg.Subject };
+  const m = memoryMailer.lastTo(email);
+  return m ? { text: m.text, subject: m.subject } : null;
 }

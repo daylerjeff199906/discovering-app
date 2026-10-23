@@ -32,13 +32,13 @@ export const envSchema = z
     APP_ENCRYPTION_KEY: z.string().refine((v) => Buffer.from(v, "base64").length === 32, "Debe ser 32 bytes en base64"),
     RATE_LIMIT_ENABLED: bool("true"),
 
-    S3_ENDPOINT: z.string().url(),
-    S3_PUBLIC_ENDPOINT: z.string().url(),
-    S3_REGION: z.string().default("us-east-1"),
-    S3_BUCKET: z.string().min(1),
-    S3_ACCESS_KEY: z.string().min(1),
-    S3_SECRET_KEY: z.string().min(1),
-    S3_FORCE_PATH_STYLE: bool("true"),
+    // Cloudflare R2 (API compatible con S3). El bucket es PRIVADO: los archivos se leen a través de la API.
+    R2_ACCOUNT_ID: z.string().default(""),
+    R2_ACCESS_KEY_ID: z.string().default(""),
+    R2_SECRET_ACCESS_KEY: z.string().default(""),
+    R2_BUCKET: z.string().default(""),
+    /** Opcional. Por defecto https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com */
+    R2_ENDPOINT: z.string().default(""),
     UPLOAD_URL_TTL_SECONDS: z.coerce.number().int().min(30).default(300),
     MEDIA_TICKET_TTL_SECONDS: z.coerce.number().int().min(30).default(900),
     MEDIA_MAX_BYTES: z.coerce.number().int().default(10 * 1024 * 1024),
@@ -46,12 +46,11 @@ export const envSchema = z
     MEDIA_MAX_PER_VISIT: z.coerce.number().int().default(20),
     MEDIA_MAX_PER_USER: z.coerce.number().int().default(2000),
 
-    SMTP_HOST: z.string().default("localhost"),
-    SMTP_PORT: z.coerce.number().int().default(1030),
-    SMTP_SECURE: bool("false"),
-    SMTP_USER: z.string().optional().default(""),
-    SMTP_PASS: z.string().optional().default(""),
-    MAIL_FROM: z.string().default("Por aquí <no-reply@poraqui.local>"),
+    // Correo transaccional con Resend. Sin RESEND_API_KEY (solo fuera de producción) los correos se guardan en DEV_MAIL_DIR.
+    RESEND_API_KEY: z.string().default(""),
+    MAIL_FROM: z.string().default("Por aquí <onboarding@resend.dev>"),
+    MAIL_REPLY_TO: z.string().default(""),
+    DEV_MAIL_DIR: z.string().default(".dev-mail"),
 
     ROUTING_PROVIDER: z.enum(["none", "osrm", "fixture"]).default("none"),
     OSRM_BASE_URL: z.string().optional().default(""),
@@ -70,6 +69,9 @@ export const envSchema = z
     if (env.ROUTING_PROVIDER === "fixture") fail("El proveedor 'fixture' no puede usarse en producción", "ROUTING_PROVIDER");
     if (env.ENABLE_DEMO_CONTENT) fail("El contenido de demostración debe estar desactivado en producción", "ENABLE_DEMO_CONTENT");
     if (env.APP_ENCRYPTION_KEY === DEV_ENCRYPTION_KEY) fail("Genera una APP_ENCRYPTION_KEY propia", "APP_ENCRYPTION_KEY");
+    for (const key of ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "RESEND_API_KEY"] as const) {
+      if (!env[key]) fail(`${key} es obligatorio en producción`, key);
+    }
     if (!env.RATE_LIMIT_ENABLED) fail("El límite de peticiones no puede desactivarse en producción", "RATE_LIMIT_ENABLED");
   });
 
@@ -89,6 +91,18 @@ export function loadDotenv(): void {
     if (parent === dir) return;
     dir = parent;
   }
+}
+
+/** Raíz del monorepo (donde está pnpm-workspace.yaml); si no se encuentra, el directorio actual. */
+export function findRepoRoot(): string {
+  let dir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    if (existsSync(path.join(dir, "pnpm-workspace.yaml"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return process.cwd();
 }
 
 export function parseEnv(source: NodeJS.ProcessEnv = process.env, overrides: Record<string, string> = {}): Env {

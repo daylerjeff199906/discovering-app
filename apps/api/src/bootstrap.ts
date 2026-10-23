@@ -41,6 +41,6 @@ export async function createApp(overrides: Record<string, string> = {}): Promise
   );
   SwaggerModule.setup("api/docs", app, document, { jsonDocumentUrl: "api/v1/openapi.json" });
 
-  await app.get(StoragePort).ensureBucket().catch((err) => console.error(JSON.stringify({ level: "warn", msg: "ensureBucket failed", err: String(err) })));
+  await app.get(StoragePort).checkBucket().catch((err) => console.error(JSON.stringify({ level: "warn", msg: "R2 no responde", err: String(err) })));
   return app;
 }

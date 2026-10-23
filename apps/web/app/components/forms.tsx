@@ -20,7 +20,7 @@ export function PasswordInput({ invalid, ...rest }: ComponentPropsWithRef<"input
 /** Requisitos de contraseña visibles mientras se escribe (con texto, no solo color). */
 export function PasswordRules({ value }: { value: string }) {
   return (
-    <ul className="m-0 flex list-none flex-col gap-0.5 p-0 text-sm" aria-label="Requisitos de la contraseña">
+    <ul className="password-rules m-0 flex list-none flex-col gap-0.5 p-0 text-sm" aria-label="Requisitos de la contraseña">
       {PASSWORD_RULES.map((r) => {
         const ok = r.test(value);
         return (

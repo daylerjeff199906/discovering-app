@@ -17,7 +17,10 @@ export default defineConfig(({ mode }) => {
       // Origen único en desarrollo: /api/* → Nest; el resto lo sirve el SSR de React Router.
       proxy: { "/api": { target: `http://localhost:${env.API_PORT || 4000}` } },
     },
-    ssr: { noExternal: ["@por-aqui/ui", "@por-aqui/api-client"] },
-    resolve: { dedupe: ["react", "react-dom"] },
+    ssr: { noExternal: ["@por-aqui/ui", "@por-aqui/api-client", "@por-aqui/contracts"] },
+    resolve: {
+      alias: { "@por-aqui/contracts": path.join(root, "packages/contracts/src/index.ts") },
+      dedupe: ["react", "react-dom"],
+    },
   };
 });

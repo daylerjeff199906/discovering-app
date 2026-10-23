@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * E2E contra el stack REAL (`pnpm infra:up` + `pnpm dev`): PostgreSQL/PostGIS, Redis, MinIO, Mailpit, API, worker y web.
+ * E2E contra el stack REAL (`pnpm infra:up` + `pnpm dev`): PostgreSQL/PostGIS, Redis, API, worker y web. Sin claves de Resend los correos quedan en `.dev-mail/`;
+ * las fotos requieren las claves de Cloudflare R2 (R2_*).
  * Usa el Chrome instalado (sin descargar navegadores). Los tiles del mapa vienen de internet; si no hay red,
  * el mapa queda vacío pero el flujo sigue funcionando.
  */

@@ -9,8 +9,8 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   /* ── Crear ruta manual y añadir paradas ── */
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await page.getByText("Armar manualmente").click();
-  await page.getByRole("textbox", { name: "Destino" }).fill("Iquitos");
-  await page.getByLabel("Título (opcional)").fill("Mi día en Iquitos (e2e)");
+  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
+  await page.getByLabel("Ponle un nombre").fill("Mi día en Iquitos (e2e)");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await expect(page.getByLabel("Título del viaje")).toHaveValue("Mi día en Iquitos (e2e)");
@@ -123,7 +123,7 @@ test("ruta automática: propuesta explicable, aplicación y persistencia", async
   await signUpVerifyLogin(page, "auto");
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("textbox", { name: "Destino" }).fill("Cusco");
+  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
@@ -165,5 +165,5 @@ test("rutas privadas redirigen a ingresar conservando la intención", async ({ p
   await page.goto("/app/viajes/nuevo");
   await page.waitForURL(/\/ingresar\?returnTo=%2Fapp%2Fviajes%2Fnuevo/);
   await page.goto("/ingresar?returnTo=https%3A%2F%2Fevil.example");
-  await expect(page.getByRole("heading", { name: "Ingresar" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Qué bueno verte por aquí." })).toBeVisible();
 });
