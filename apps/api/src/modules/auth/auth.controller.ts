@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, Param, Post, Put, Req, Res } from "@nestjs/common";
+import { Controller, Delete, Get, HttpCode, Param, Post, Put, Query, Req, Res } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import {
   changePasswordInputSchema,
@@ -38,6 +38,22 @@ export class AuthController {
   @Api({ summary: "Crear cuenta (pendiente de verificación)", body: registerInputSchema, status: 201 })
   register(@Body() body: RegisterInput) {
     return this.auth.register(body);
+  }
+
+  @Public()
+  @Get("google/start")
+  @RateLimit({ key: "google", limit: 30, windowSec: 600 })
+  @Api({ summary: "Inicia sesión o crea cuenta con Google (redirige a Google; PKCE + state + nonce)" })
+  googleStart(@Query() query: { mode?: string; terms?: string; returnTo?: string }, @Res() res: Response) {
+    res.redirect(302, this.auth.googleStart(query, res));
+  }
+
+  @Public()
+  @Get("google/callback")
+  @RateLimit({ key: "google", limit: 30, windowSec: 600 })
+  @Api({ summary: "Retorno de Google: valida, vincula o crea la cuenta, abre sesión y redirige a la web" })
+  async googleCallback(@Query() query: { code?: string; state?: string; error?: string }, @Req() req: Request, @Res() res: Response) {
+    res.redirect(302, await this.auth.googleCallback(query, req, res));
   }
 
   @Public()

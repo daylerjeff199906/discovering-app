@@ -1,4 +1,5 @@
 import { Readable } from "node:stream";
+import { GoogleOAuthPort, type GoogleAvatar, type GoogleProfile } from "../src/infrastructure/auth/google";
 import { MailerPort, type MailMessage } from "../src/infrastructure/mail/mailer";
 import { StoragePort, type ObjectInfo, type ObjectSummary, type UploadTarget } from "../src/infrastructure/storage/storage";
 
@@ -82,3 +83,23 @@ export class MemoryMailer extends MailerPort {
 
 export const memoryStorage = new MemoryStorage();
 export const memoryMailer = new MemoryMailer();
+
+/** Google de mentira: cada «code» se asocia a un perfil y la foto de perfil es configurable. */
+export class FakeGoogle extends GoogleOAuthPort {
+  readonly enabled = true;
+  readonly profiles = new Map<string, GoogleProfile>();
+  avatar: GoogleAvatar | null = null;
+  authorizeUrl({ state, nonce }: { state: string; nonce: string; codeVerifier: string }): string {
+    return `https://accounts.google.test/auth?state=${state}&nonce=${nonce}`;
+  }
+  async exchange(code: string): Promise<GoogleProfile> {
+    const p = this.profiles.get(code);
+    if (!p) throw new Error("GOOGLE_TOKEN_400");
+    return p;
+  }
+  async fetchAvatar(): Promise<GoogleAvatar | null> {
+    return this.avatar;
+  }
+}
+
+export const fakeGoogle = new FakeGoogle();

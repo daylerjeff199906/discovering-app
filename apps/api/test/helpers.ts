@@ -67,6 +67,11 @@ export class Client {
     return this.wrap(await this.agent.get(`/api/v1${path}`));
   }
 
+  /** GET sin seguir redirecciones (conserva cookies): para el flujo de Google. */
+  async rawGet(path: string): Promise<Res> {
+    return this.wrap(await this.agent.get(`/api/v1${path}`).redirects(0));
+  }
+
   async send(method: "post" | "put" | "patch" | "delete", path: string, body?: unknown, headers: Record<string, string> = {}): Promise<Res> {
     await this.ensureCsrf();
     let r = this.agent[method](`/api/v1${path}`).set("x-csrf-token", this.csrf).set("origin", "http://localhost:5173");

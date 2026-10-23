@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { ArrowRight, Compass } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { FormError, PasswordInput } from "../components/forms";
+import { GoogleAlert, GoogleButton } from "../components/google-button";
 import { api } from "../lib/api";
 import { qk } from "../lib/query";
 import { seoMeta } from "../lib/seo";
@@ -34,6 +35,7 @@ export default function Ingresar() {
       <p className="eyebrow auth-step-label"><Compass size={16} strokeWidth={1.5} aria-hidden="true" /> Tu siguiente aventura te espera</p>
       <h1>Qué bueno verte<br /><em>por aquí.</em></h1>
       <p className="auth-intro">Ingresa a tu cuenta y sigue escribiendo tu historia.</p>
+      <GoogleAlert code={params.get("error")} />
       {params.get("verificado") ? <Alert tone="success" title="Correo confirmado">Ya puedes ingresar y publicar tus recorridos.</Alert> : null}
       {params.get("clave") ? <Alert tone="success" title="Contraseña actualizada">Inicia sesión con tu nueva contraseña.</Alert> : null}
       {returnTo !== "/app/inicio" ? <p className="text-sm text-muted-foreground">Ingresa para continuar con lo que estabas haciendo.</p> : null}
@@ -42,6 +44,7 @@ export default function Ingresar() {
       <FormError error={m.error} />
       <Link to="/recuperar-cuenta" className="-mt-2 self-end text-xs font-medium">¿Olvidaste tu contraseña?</Link>
       <Button type="submit" loading={m.isPending}>Ingresar <ArrowRight size={17} aria-hidden="true" /></Button>
+      <GoogleButton mode="login" returnTo={returnTo} />
       <p className="auth-account-link auth-divider">¿Aún no tienes cuenta? <Link to={`/registro?returnTo=${encodeURIComponent(returnTo)}`} className="font-semibold">Empieza tu historia</Link></p>
     </form>
   );

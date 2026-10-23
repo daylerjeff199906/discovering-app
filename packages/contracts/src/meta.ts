@@ -6,6 +6,7 @@ export const capabilitiesDtoSchema = z.object({
   routing: z.object({ available: z.boolean(), provider: z.string().nullable(), modes: z.array(z.string()) }),
   geocoder: z.object({ available: z.boolean(), provider: z.string().nullable() }),
   media: z.object({ maxBytes: z.number().int(), maxPerVisit: z.number().int(), mimeTypes: z.array(z.string()) }),
+  auth: z.object({ google: z.boolean() }),
   track: z.object({ maxAccuracyM: z.number(), minDistanceM: z.number() }),
 });
 export type CapabilitiesDto = z.infer<typeof capabilitiesDtoSchema>;

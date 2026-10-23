@@ -118,6 +118,20 @@ export class MediaService {
     return this.dtoOf(updated);
   }
 
+  /**
+   * Foto de perfil traída por el servidor (p. ej. la de Google): se guarda como original y pasa por el MISMO
+   * procesamiento que cualquier foto (verificación de bytes, sin EXIF, derivados). Al quedar READY reemplaza el avatar.
+   */
+  async importAvatar(userId: string, data: Buffer, mime: string): Promise<void> {
+    const id = randomUUID();
+    const key = originalKey(assetPrefix(userId, { kind: "avatar" }, id));
+    await this.storage.put(key, data, mime);
+    await this.db.transaction(async (tx) => {
+      await tx.insert(mediaAssets).values({ id, ownerId: userId, purpose: "AVATAR", originalKey: key, mimeClaimed: mime, status: "UPLOADED", sizeBytes: data.length, uploadExpiresAt: new Date() });
+      await this.outbox.add(tx, "MEDIA_PROCESS", id, { assetId: id });
+    });
+  }
+
   async get(user: AuthUser, assetId: string): Promise<AssetDto> {
     return this.dtoOf(await this.owned(this.db, user.id, assetId));
   }

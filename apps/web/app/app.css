@@ -1905,3 +1905,7 @@
 .visit-section input, .visit-section select, .visit-section textarea, .visit-section button { box-shadow: none; }
 .visit-section .visit-photo-grip, .visit-section .visit-photo-del { box-shadow: none; }
 .visit-section .visit-photo-strip > li.is-dragging { box-shadow: 0 8px 20px -10px rgb(0 0 0 / .4); }
+/* «o» entre el formulario y Continuar con Google */
+.auth-or { display: flex; align-items: center; gap: .8rem; margin: .1rem 0; font-size: .8rem; color: var(--muted-foreground); text-align: center; }
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.google-button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; min-height: 52px; }

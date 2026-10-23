@@ -46,6 +46,12 @@ export const envSchema = z
     MEDIA_MAX_PER_VISIT: z.coerce.number().int().default(20),
     MEDIA_MAX_PER_USER: z.coerce.number().int().default(2000),
 
+    // Inicio de sesión con Google (OAuth 2.0 / OpenID Connect). Sin GOOGLE_CLIENT_ID/SECRET el botón no aparece.
+    GOOGLE_CLIENT_ID: z.string().default(""),
+    GOOGLE_CLIENT_SECRET: z.string().default(""),
+    /** Opcional. Por defecto `${PUBLIC_SITE_URL}/api/v1/auth/google/callback` (debe estar registrada en Google Cloud). */
+    GOOGLE_REDIRECT_URI: z.string().default(""),
+
     // Correo transaccional con Resend. Sin RESEND_API_KEY (solo fuera de producción) los correos se guardan en DEV_MAIL_DIR.
     RESEND_API_KEY: z.string().default(""),
     MAIL_FROM: z.string().default("Por aquí <onboarding@resend.dev>"),

@@ -4,7 +4,8 @@ import { Queue } from "bullmq";
 import { Redis } from "ioredis";
 import type { Pool } from "pg";
 import { ENV, type Env } from "../config/env";
-import { createMailerAdapter, createStorage } from "./adapters";
+import { createGoogleAdapter, createMailerAdapter, createStorage } from "./adapters";
+import { GoogleOAuthPort } from "./auth/google";
 import { MailerPort } from "./mail/mailer";
 import { OutboxService } from "./outbox.service";
 import { RateLimitService } from "./rate-limit.service";
@@ -45,12 +46,13 @@ class Lifecycle implements OnApplicationShutdown {
     },
     { provide: StoragePort, inject: [ENV], useFactory: (env: Env) => createStorage(env) },
     { provide: MailerPort, inject: [ENV], useFactory: (env: Env) => createMailerAdapter(env) },
+    { provide: GoogleOAuthPort, inject: [ENV], useFactory: (env: Env) => createGoogleAdapter(env) },
     { provide: RoutingPort, inject: [ENV], useFactory: (env: Env) => createRouting(env) },
     { provide: GeocoderPort, inject: [ENV], useFactory: (env: Env) => createGeocoder(env) },
     OutboxService,
     RateLimitService,
     Lifecycle,
   ],
-  exports: [DB, POOL, REDIS, QUEUES, StoragePort, MailerPort, RoutingPort, GeocoderPort, OutboxService, RateLimitService],
+  exports: [DB, POOL, REDIS, QUEUES, StoragePort, MailerPort, GoogleOAuthPort, RoutingPort, GeocoderPort, OutboxService, RateLimitService],
 })
 export class InfrastructureModule {}

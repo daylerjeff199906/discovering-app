@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { Link, useSearchParams } from "react-router";
 import { ArrowRight, MailCheck, MapPinned } from "lucide-react";
 import { Checkbox, FormError, PasswordInput, PasswordRules } from "../components/forms";
+import { GoogleAlert, GoogleButton } from "../components/google-button";
 import { api, applyFieldErrors } from "../lib/api";
 import { seoMeta } from "../lib/seo";
 import type { Route } from "./+types/registro";
@@ -63,6 +64,7 @@ export default function Registro() {
       <p className="eyebrow auth-step-label"><MapPinned size={16} strokeWidth={1.5} aria-hidden="true" /> El primer paso de muchos</p>
       <h1>Hay historias que<br /><em>empiezan contigo.</em></h1>
       <p className="auth-intro">Crea tu cuenta para planear, explorar y guardar lo vivido.</p>
+      <GoogleAlert code={params.get("error")} />
       <div className="auth-name-grid">
       <Field label="Tu nombre" error={errors.displayName?.message} required>{(c) => <Input {...c} placeholder="¿Cómo te llamas?" autoComplete="name" {...form.register("displayName")} />}</Field>
       <Field label="Nombre de usuario" hint="3–24 letras, números o guion bajo." error={errors.username?.message} required>{(c) => <Input {...c} placeholder="tu_nombre" autoComplete="username" autoCapitalize="none" {...form.register("username")} />}</Field>
@@ -74,6 +76,7 @@ export default function Registro() {
       <Checkbox label={<>Acepto los <a href="/terminos" target="_blank" rel="noreferrer">términos de la beta</a>.</>} error={errors.acceptTerms?.message} {...form.register("acceptTerms")} />
       <FormError error={m.error && !(m.error as { fieldErrors?: object }).fieldErrors ? m.error : null} />
       <Button type="submit" loading={m.isPending}>Crear mi cuenta <ArrowRight size={17} aria-hidden="true" /></Button>
+      <GoogleButton mode="register" returnTo={returnTo} termsAccepted={Boolean(form.watch("acceptTerms"))} />
       <p className="auth-account-link auth-divider">¿Ya tienes cuenta? <Link to={`/ingresar?returnTo=${encodeURIComponent(returnTo)}`} className="font-semibold">Ingresar</Link></p>
     </form>
   );

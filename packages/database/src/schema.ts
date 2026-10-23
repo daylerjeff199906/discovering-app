@@ -74,6 +74,26 @@ export const profiles = pgTable(
   (t) => [check("profiles_username_chk", sql`${t.username} ~ '^[A-Za-z0-9_]{3,24}$'`)],
 );
 
+/** Cuentas externas vinculadas (hoy solo Google). `subject` es el identificador estable del proveedor (no el correo). */
+export const oauthIdentities = pgTable(
+  "oauth_identities",
+  {
+    id: pk(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    subject: text("subject").notNull(),
+    email: text("email"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("oauth_identities_provider_subject_uq").on(t.provider, t.subject),
+    unique("oauth_identities_user_provider_uq").on(t.userId, t.provider),
+    check("oauth_identities_provider_chk", sql`${t.provider} in ('google')`),
+  ],
+);
+
 export const sessions = pgTable(
   "sessions",
   {

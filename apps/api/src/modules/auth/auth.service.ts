@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import {
   ERROR_CODES,
   TERMS_VERSION,
+  safeReturnTo,
   type ChangePasswordInput,
   type LoginInput,
   type MeDto,
@@ -9,17 +10,19 @@ import {
   type ResetPasswordInput,
   type SessionDto,
 } from "@por-aqui/contracts";
-import { authTokens, profiles, sessions, shareLinks, publications, users, type Db } from "@por-aqui/database";
+import { authTokens, oauthIdentities, profiles, sessions, shareLinks, publications, users, type Db } from "@por-aqui/database";
 import argon2 from "argon2";
 import { and, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import type { Request, Response } from "express";
-import { randomToken, sha256 } from "../../common/crypto";
+import { hmac, randomToken, safeEqual, sha256 } from "../../common/crypto";
 import type { AuthUser } from "../../common/decorators";
 import { AppError, badRequest, conflict, unauthenticated } from "../../common/errors";
 import { ENV, type Env } from "../../config/env";
+import { GoogleOAuthPort } from "../../infrastructure/auth/google";
 import { OutboxService } from "../../infrastructure/outbox.service";
 import { RateLimitService } from "../../infrastructure/rate-limit.service";
 import { DB } from "../../infrastructure/tokens";
+import { MediaService } from "../media/media.service";
 
 /** Argon2id con los mínimos recomendados por OWASP (19 MiB, t=2, p=1). Ver docs/ARCHITECTURE.md. */
 const ARGON_OPTIONS = { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
@@ -35,6 +38,8 @@ export class AuthService {
     @Inject(ENV) private readonly env: Env,
     private readonly outbox: OutboxService,
     private readonly limiter: RateLimitService,
+    private readonly google: GoogleOAuthPort,
+    private readonly media: MediaService,
   ) {}
 
   hashPassword(password: string) {
@@ -134,6 +139,142 @@ export class AuthService {
       await this.db.transaction((tx) => this.issueVerification(tx, row.id, row.name, normalized));
     }
     return { ok: true };
+  }
+
+  /* ───────────── Google (OpenID Connect + PKCE) ───────────── */
+
+  private signOAuthCookie(payload: object): string {
+    const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    return `${body}.${hmac(this.env.APP_ENCRYPTION_KEY, `oauth:${body}`)}`;
+  }
+
+  private readOAuthCookie(raw: unknown): { s: string; v: string; n: string; m: "login" | "register"; t: boolean; r: string; e: number } | null {
+    if (typeof raw !== "string") return null;
+    const [body, sig] = raw.split(".");
+    if (!body || !sig || !safeEqual(sig, hmac(this.env.APP_ENCRYPTION_KEY, `oauth:${body}`))) return null;
+    try {
+      const v = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+      return v.e > Date.now() ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private webUrl(path: string): string {
+    return `${this.env.PUBLIC_SITE_URL.replace(/\/$/, "")}${path}`;
+  }
+
+  /** Inicia el flujo: guarda estado/nonce/verificador PKCE en una cookie firmada (10 min) y entrega la URL de Google. */
+  googleStart(query: { mode?: string; terms?: string; returnTo?: string }, res: Response): string {
+    const mode = query.mode === "register" ? "register" : "login";
+    if (!this.google.enabled) return this.webUrl(`/${mode === "register" ? "registro" : "ingresar"}?error=google_no_disponible`);
+    const state = randomToken(24);
+    const nonce = randomToken(16);
+    const verifier = randomToken(48);
+    const cookie = this.signOAuthCookie({ s: state, v: verifier, n: nonce, m: mode, t: query.terms === "1", r: safeReturnTo(query.returnTo ?? null, "/app/inicio"), e: Date.now() + 10 * 60_000 });
+    res.cookie("pa_oauth", cookie, { httpOnly: true, secure: this.env.COOKIE_SECURE, sameSite: "lax", path: "/api/v1/auth/google", maxAge: 10 * 60_000 });
+    return this.google.authorizeUrl({ state, nonce, codeVerifier: verifier });
+  }
+
+  /** Devuelve a dónde redirigir al navegador; los errores vuelven a la pantalla de acceso con un código (nunca detalles). */
+  async googleCallback(query: { code?: string; state?: string; error?: string }, req: Request, res: Response): Promise<string> {
+    const flow = this.readOAuthCookie(req.cookies?.pa_oauth);
+    res.clearCookie("pa_oauth", { path: "/api/v1/auth/google" });
+    const back = (code: string) => this.webUrl(`/${flow?.m === "register" ? "registro" : "ingresar"}?error=${code}`);
+    if (!flow || !query.state || !safeEqual(query.state, flow.s)) return back("google_estado");
+    if (query.error || !query.code) return back("google_cancelado");
+
+    let profile;
+    try {
+      profile = await this.google.exchange(query.code, flow.v, flow.n);
+    } catch {
+      return back("google_fallo");
+    }
+    if (!profile.emailVerified) return back("google_correo_no_verificado");
+
+    const userId = await this.resolveGoogleUser(profile, flow.t);
+    if (userId === "needs-terms") return this.webUrl(`/registro?error=google_sin_cuenta`);
+    if (userId === "disabled") return back("google_cuenta_inactiva");
+
+    const previous = req.cookies?.[this.env.SESSION_COOKIE_NAME];
+    if (typeof previous === "string") await this.db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.tokenHash, sha256(previous)));
+    await this.startSession(userId, req, res);
+    const me = await this.me(userId);
+    return this.webUrl(me.profile.onboardingCompleted ? flow.r : `/bienvenida?returnTo=${encodeURIComponent(flow.r)}`);
+  }
+
+  /** Identidad ya vinculada → esa cuenta; correo existente → se vincula; si no, se crea (solo si aceptó los términos). */
+  private async resolveGoogleUser(profile: { sub: string; email: string; name: string | null; picture: string | null }, termsAccepted: boolean): Promise<string | "needs-terms" | "disabled"> {
+    const email = profile.email.trim().toLowerCase();
+    let userId: string | undefined;
+    let created = false;
+
+    const [linked] = await this.db.select({ userId: oauthIdentities.userId }).from(oauthIdentities).where(and(eq(oauthIdentities.provider, "google"), eq(oauthIdentities.subject, profile.sub))).limit(1);
+    if (linked) userId = linked.userId;
+
+    if (!userId) {
+      const [existing] = await this.db.select({ id: users.id, verified: users.emailVerifiedAt }).from(users).where(eq(users.emailNormalized, email)).limit(1);
+      if (existing) {
+        userId = existing.id;
+        const lockedHash = existing.verified ? null : await this.unusablePasswordHash();
+        await this.db.transaction(async (tx) => {
+          if (lockedHash) {
+            // Anti pre-secuestro: si alguien registró este correo con contraseña SIN verificarlo, esa contraseña deja de valer
+            // y se cierran sus sesiones; quien controla el correo (Google lo verificó) queda como única titular.
+            await tx.update(users).set({ emailVerifiedAt: new Date(), passwordHash: lockedHash }).where(eq(users.id, existing.id));
+            await tx.update(sessions).set({ revokedAt: new Date() }).where(and(eq(sessions.userId, existing.id), isNull(sessions.revokedAt)));
+          }
+          await tx.insert(oauthIdentities).values({ userId: existing.id, provider: "google", subject: profile.sub, email }).onConflictDoNothing();
+        });
+      } else {
+        if (!termsAccepted) return "needs-terms";
+        userId = await this.createGoogleUser(profile, email);
+        created = true;
+      }
+    }
+
+    const [row] = await this.db.select({ status: users.accountStatus, avatar: profiles.avatarAssetId }).from(users).innerJoin(profiles, eq(profiles.userId, users.id)).where(eq(users.id, userId)).limit(1);
+    if (!row || row.status !== "ACTIVE") return "disabled";
+    // La foto de Google solo se importa si la cuenta aún no tiene una; si falla, el acceso sigue igual.
+    if ((created || !row.avatar) && profile.picture) {
+      try {
+        const avatar = await this.google.fetchAvatar(profile.picture);
+        if (avatar) await this.media.importAvatar(userId, avatar.data, avatar.mime);
+      } catch {
+        /* sin foto: no bloquea el inicio de sesión */
+      }
+    }
+    return userId;
+  }
+
+  /** Contraseña que nadie conoce: la cuenta solo entra con Google hasta que use «Recuperar contraseña». */
+  private unusablePasswordHash(): Promise<string> {
+    return this.hashPassword(randomToken(32));
+  }
+
+  private async createGoogleUser(profile: { sub: string; name: string | null }, email: string): Promise<string> {
+    const local = email.split("@")[0]!.toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").slice(0, 16);
+    const base = local.length >= 3 ? local : `viajero_${local}`.slice(0, 16);
+    const passwordHash = await this.unusablePasswordHash();
+    const displayName = (profile.name?.trim() || local).slice(0, 60);
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const username = attempt === 0 ? base : `${base}_${Math.floor(1000 + Math.random() * 9000)}`;
+      try {
+        return await this.db.transaction(async (tx) => {
+          const [user] = await tx
+            .insert(users)
+            .values({ emailOriginal: email, emailNormalized: email, passwordHash, emailVerifiedAt: new Date(), termsVersion: TERMS_VERSION, termsAcceptedAt: new Date() })
+            .returning({ id: users.id });
+          await tx.insert(profiles).values({ userId: user!.id, username, usernameNormalized: username.toLowerCase(), displayName });
+          await tx.insert(oauthIdentities).values({ userId: user!.id, provider: "google", subject: profile.sub, email });
+          return user!.id;
+        });
+      } catch (err) {
+        if (isUniqueViolation(err, "profiles_username_normalized_unique")) continue;
+        throw err;
+      }
+    }
+    throw conflict("USERNAME_TAKEN", "No pudimos asignarte un nombre de usuario. Inténtalo de nuevo.");
   }
 
   /* ───────────── Sesión ───────────── */

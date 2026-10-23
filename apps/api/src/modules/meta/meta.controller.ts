@@ -32,6 +32,7 @@ export class MetaController {
       routing: { available: this.routing.available, provider: this.routing.name, modes },
       geocoder: { available: this.geocoder.name !== null, provider: this.geocoder.name },
       media: { maxBytes: this.env.MEDIA_MAX_BYTES, maxPerVisit: this.env.MEDIA_MAX_PER_VISIT, mimeTypes: ["image/jpeg", "image/png", "image/webp"] },
+      auth: { google: Boolean(this.env.GOOGLE_CLIENT_ID && this.env.GOOGLE_CLIENT_SECRET) },
       track: { maxAccuracyM: this.env.TRACK_MAX_ACCURACY_M, minDistanceM: this.env.TRACK_MIN_DISTANCE_M },
     };
   }

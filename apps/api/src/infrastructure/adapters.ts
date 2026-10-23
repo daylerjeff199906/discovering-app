@@ -1,5 +1,6 @@
 import type { Env } from "../config/env";
 import { AppError } from "../common/errors";
+import { GoogleOAuth, type GoogleOAuthPort } from "./auth/google";
 import { createMailer, type MailerPort } from "./mail/mailer";
 import { R2Storage, StoragePort } from "./storage/storage";
 
@@ -7,6 +8,7 @@ import { R2Storage, StoragePort } from "./storage/storage";
 export interface AdapterOverrides {
   storage?: StoragePort;
   mailer?: MailerPort;
+  google?: GoogleOAuthPort;
 }
 
 let overrides: AdapterOverrides = {};
@@ -51,6 +53,10 @@ export function createStorage(env: Env): StoragePort {
   if (overrides.storage) return overrides.storage;
   const configured = env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_BUCKET;
   return configured ? new R2Storage(env) : new UnconfiguredStorage();
+}
+
+export function createGoogleAdapter(env: Env): GoogleOAuthPort {
+  return overrides.google ?? new GoogleOAuth(env);
 }
 
 export function createMailerAdapter(env: Env): MailerPort {

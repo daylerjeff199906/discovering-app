@@ -54,6 +54,21 @@ El código está en `apps/api/src/infrastructure/storage/keys.ts`; para otro tip
 2. Para enviar a cualquier destinatario, verifica tu dominio (**Domains**) y usa un remitente de ese dominio en `MAIL_FROM` (p. ej. `"Por aquí <no-reply@tu.dominio>"`). Mientras tanto `onboarding@resend.dev` solo envía a la dirección de tu propia cuenta de Resend.
 3. Sin `RESEND_API_KEY` (solo fuera de producción) el worker guarda cada correo como `.txt` en `.dev-mail/` (con el enlace) y lo escribe en su log. En producción la clave es obligatoria.
 
+### Google (iniciar sesión, crear cuenta y foto de perfil)
+
+Opcional: sin `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` el botón «Continuar con Google» no se muestra.
+
+1. <https://console.cloud.google.com> → crea o elige un proyecto → **APIs y servicios → Pantalla de consentimiento de OAuth** (tipo *Externo*; scopes básicos `openid`, `email`, `profile`; mientras esté en «Pruebas», añade tu correo como usuario de prueba).
+2. **Credenciales → Crear credenciales → ID de cliente de OAuth → Aplicación web**.
+3. **URI de redireccionamiento autorizado**: `<PUBLIC_SITE_URL>/api/v1/auth/google/callback` (en desarrollo: `http://localhost:5173/api/v1/auth/google/callback`; en producción, tu dominio con https).
+4. Copia el ID y el secreto a `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) y reinicia API y worker.
+
+Cómo se comporta (OpenID Connect con código + PKCE, `state` y `nonce`; el secreto nunca llega al navegador):
+- **Cuenta nueva**: se crea con el correo ya verificado por Google, el nombre de Google y un usuario generado; hay que aceptar los términos (la casilla de «Crear cuenta»). La foto de perfil se descarga y pasa por el mismo procesamiento que cualquier foto (sin EXIF, derivados en R2).
+- **Correo ya registrado**: se vincula a esa cuenta. Si esa cuenta no había verificado su correo, su contraseña anterior se invalida y se cierran sus sesiones (evita que alguien «reserve» tu correo antes que tú).
+- **Cuentas creadas con Google** no tienen contraseña conocida: para usar el formulario de correo o para eliminar la cuenta, primero usa «¿Olvidaste tu contraseña?».
+- Esto no sincroniza Google Maps: Google no ofrece una API para leer tu Timeline ni tus listas guardadas (el Timeline ahora vive solo en el dispositivo). La vía realista es importar archivos (GPX/KML o la exportación de Google Takeout).
+
 ### Mapas
 
 Por omisión se usan tiles raster de OpenStreetMap solo para desarrollo (su política de uso no admite tráfico de producción). Configura `VITE_MAP_TILES_URL` con un proveedor propio o autohospedado.
