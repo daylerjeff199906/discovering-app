@@ -50,7 +50,7 @@ export default function InicioUsuario() {
         {locationNote ? <p role="status" className="discovery-location-note">{locationNote}</p> : null}
         {catalog.isError ? <p role="alert">No se pudo cargar el catálogo. <button type="button" onClick={() => catalog.refetch()}>Reintentar</button></p> : null}
         <div className="discovery-actions">
-          <Link to={`/app/viajes/nuevo?modo=auto${cityQuery}`}><MapPinned size={29} strokeWidth={1.3} aria-hidden="true" /><strong>{catalog.data?.banner.planLabel ?? "Planear un viaje"}</strong><ArrowRight className="discovery-action-arrow" size={21} aria-hidden="true" /></Link>
+          <Link to={`/app/viajes/nuevo?modo=auto${cityQuery}`}><MapPinned size={29} strokeWidth={1.3} aria-hidden="true" /><strong>{catalog.data?.banner.planLabel ?? "Planear una aventura"}</strong><ArrowRight className="discovery-action-arrow" size={21} aria-hidden="true" /></Link>
           <Link to={`/app/viajes/nuevo?modo=libre${cityQuery}`}><Camera size={29} strokeWidth={1.3} aria-hidden="true" /><strong>{catalog.data?.banner.recordLabel ?? "Registrar mi aventura"}</strong><ArrowRight className="discovery-action-arrow" size={21} aria-hidden="true" /></Link>
         </div>
       </div>
@@ -58,10 +58,10 @@ export default function InicioUsuario() {
     </section>
     <DestinationPicker open={pickerOpen} onClose={() => setPickerOpen(false)} selected={city?.id} onSelect={(c) => setCityId(c.id)} />
     <section aria-labelledby="recent-journeys" className="user-portal-recent">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5"><h2 id="recent-journeys" className="text-2xl">Tus últimas historias</h2><Link to="/app/viajes" className="text-sm">Ver mis viajes <ArrowUpRight size={15} className="inline" aria-hidden="true" /></Link></div>
-      {journeys.isPending ? <LoadingBlock label="Cargando tus viajes…" /> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5"><h2 id="recent-journeys" className="text-2xl">Tus últimas historias</h2><Link to="/app/viajes" className="text-sm">Ver mis aventuras <ArrowUpRight size={15} className="inline" aria-hidden="true" /></Link></div>
+      {journeys.isPending ? <LoadingBlock label="Cargando tus aventuras…" /> : null}
       {journeys.isError ? <QueryError error={journeys.error} retry={() => journeys.refetch()} /> : null}
-      {journeys.data?.length === 0 ? <div className="user-portal-empty"><h3 className="text-xl mb-2">Tu primera historia está por empezar</h3><p>Crea un viaje y deja espacio para lo que Iquitos tiene preparado para ti.</p></div> : null}
+      {journeys.data?.length === 0 ? <div className="user-portal-empty"><h3 className="text-xl mb-2">Tu primera historia está por empezar</h3><p>Crea una aventura y deja espacio para lo que Iquitos tiene preparado para ti.</p></div> : null}
       <ul className="user-portal-journeys">
         {journeys.data?.slice(0, 3).map((j) => <li key={j.id}><Link to={`/app/viajes/${j.id}`}>
           <Badge tone={STATUS_TONE[j.status]}>{STATUS_LABEL[j.status]}</Badge><h3>{j.title}</h3><p>{j.destinationLabel ?? "Iquitos"} · {j.stopsCount} paradas · {j.visitsCount} visitas</p><span className="text-sm font-medium">Ver detalles <ArrowRight size={15} className="inline" aria-hidden="true" /></span>

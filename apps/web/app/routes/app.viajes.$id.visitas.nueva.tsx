@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, Clock, Info, MapPin } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
+import { PhotoCredit } from "../components/photo-credit";
 import { VisitPhotoPicker } from "../components/visit-photo-picker";
 import { useTravelCatalog } from "../lib/catalog";
 import { uploadVisitPhoto, type VisitPhotoUpload } from "../lib/visit-photo-upload";
@@ -68,7 +69,7 @@ export default function NuevaVisita() {
       if (files.length && !navigator.onLine) throw new Error("Conéctate para guardar las fotos, o retíralas para registrar la visita sin conexión.");
       const j = journey.data!;
       let rec = j.recording;
-      if (!rec) rec = await api.recording.start(id); // un viaje sin iniciar se inicia al registrar la primera visita
+      if (!rec) rec = await api.recording.start(id); // una aventura sin iniciar se inicia al registrar la primera visita
       const payload = { clientMutationId, ...choice!, visitedAt: fromLocalInput(when, tz), timezone: tz, note: note.trim() || null, ...extrasPayload(extras), retroactive: rec.status === "COMPLETED" ? true : undefined };
       if (createdVisitId || files.length) {
         let visitId = createdVisitId;
@@ -115,11 +116,11 @@ export default function NuevaVisita() {
 
   return (
     <section className="visit-editor-page">
-      <Link to={`/app/viajes/${id}`} className="adventure-back"><ArrowLeft size={18} aria-hidden="true" /> Volver a mi viaje</Link>
+      <Link to={`/app/viajes/${id}`} className="adventure-back"><ArrowLeft size={18} aria-hidden="true" /> Volver a mi aventura</Link>
       <h1>Registrar visita</h1>
       {choice ? <p className="visit-place-label"><MapPin size={20} aria-hidden="true" />{placeName}{placeVisual ? ` · ${catalog.data?.cities.find((c) => c.id === placeVisual.cityId)?.name ?? ""}` : ""}</p> : <p className="adventure-intro">Elige un lugar y guarda lo que quieres recordar.</p>}
-      {placeVisual ? <figure className="visit-place-cover"><img src={placeVisual.imageUrl} alt={`Imagen de referencia de ${placeName}`} width={700} height={300} /><figcaption>Imagen de referencia del catálogo</figcaption></figure> : null}
-      {!j.recording ? <Alert tone="sage" className="mb-4">Este viaje todavía no se inició. Al guardar la visita se iniciará el registro (podrás finalizarlo cuando quieras).</Alert> : null}
+      {placeVisual ? <figure className="visit-place-cover"><img src={placeVisual.imageUrl} alt={`Imagen de referencia de ${placeName}`} width={700} height={300} /><figcaption>{placeVisual.imageCredit ? <PhotoCredit credit={placeVisual.imageCredit} /> : "Imagen de referencia del catálogo"}</figcaption></figure> : null}
+      {!j.recording ? <Alert tone="sage" className="mb-4">Esta aventura todavía no se inició. Al guardar la visita se iniciará el registro (podrás finalizarlo cuando quieras).</Alert> : null}
       {completed ? <Alert tone="warning" className="mb-4" title="Estás añadiendo una visita pasada">Este recorrido ya está finalizado. La visita se agregará al diario; si ya publicaste, usa «Actualizar publicación» para mostrarla.</Alert> : null}
       <form onSubmit={(e) => { e.preventDefault(); if (choice) save.mutate(); }} className="grid gap-6">
         <fieldset disabled={save.isPending || Boolean(createdVisitId)}><details className="visit-place-picker" open={!choice}><summary>{choice ? "Cambiar lugar de la visita" : "Seleccionar lugar"}</summary><PlacePicker journey={j} value={choice} onChange={(v, label) => { setChoice(v); setPlaceName(label); }} /></details></fieldset>

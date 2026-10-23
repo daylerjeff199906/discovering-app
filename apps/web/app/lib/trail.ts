@@ -4,7 +4,7 @@ import { legText } from "./format";
 
 export interface FlatStop extends StopDto {
   dayIndex: number;
-  /** Número continuo en todo el viaje (para el mapa). */
+  /** Número continuo en toda la aventura (para el mapa). */
   index: number;
 }
 

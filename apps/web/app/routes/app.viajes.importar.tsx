@@ -70,10 +70,10 @@ export default function ImportarRecorrido() {
 
   return (
     <section className="start-adventure new-journey-page new-journey-centered">
-      <Link to="/app/viajes/nuevo" className="adventure-back"><ArrowLeft size={18} aria-hidden="true" /> Volver a nuevo viaje</Link>
+      <Link to="/app/viajes/nuevo" className="adventure-back"><ArrowLeft size={18} aria-hidden="true" /> Volver a nueva aventura</Link>
       <p className="eyebrow mb-2">Desde tus archivos</p>
       <h1>Importar recorrido</h1>
-      <p className="adventure-intro">Convierte un trayecto que ya hiciste en un viaje con su mapa, sus fechas y sus lugares. Acepta GPX, KML y la exportación de Google Takeout.</p>
+      <p className="adventure-intro">Convierte un trayecto que ya hiciste en una aventura con su mapa, sus fechas y sus lugares. Acepta GPX, KML y la exportación de Google Takeout.</p>
 
       <Alert tone="neutral" className="mb-4" title="Google no permite sincronizar tu Timeline ni tus listas">
         Por eso funciona con archivos: descárgalos desde <a href="https://takeout.google.com" target="_blank" rel="noreferrer" className="underline">Google Takeout</a> (Cronología y Maps · Lugares guardados) y súbelos aquí. Si descargaste un ZIP, descomprímelo y elige el archivo de dentro.
@@ -88,7 +88,7 @@ export default function ImportarRecorrido() {
 
           {file ? (
             <div className="new-journey-details">
-              <Field label="Nombre del viaje" hint="Opcional. Si lo dejas vacío usamos el del archivo.">
+              <Field label="Nombre de la aventura" hint="Opcional. Si lo dejas vacío usamos el del archivo.">
                 {(c) => <Input {...c} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder={data?.suggestedTitle ?? "Recorrido importado"} />}
               </Field>
               <Field label="Desde (opcional)" hint="Solo importa lo que ocurrió a partir de este día.">

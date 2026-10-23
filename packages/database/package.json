@@ -27,7 +27,9 @@
     "db:migrate": "tsx src/cli/migrate.ts",
     "db:seed": "tsx src/cli/seed.ts",
     "db:reset": "tsx src/cli/reset.ts",
-    "db:promote": "tsx src/cli/promote.ts"
+    "db:promote": "tsx src/cli/promote.ts",
+    "db:images:iquitos": "tsx src/cli/fetch-iquitos-images.ts",
+    "db:seed:iquitos": "tsx src/cli/seed-iquitos.ts"
   },
   "dependencies": {
     "argon2": "0.45.1",
@@ -41,6 +43,7 @@
     "@types/pg": "8.23.1",
     "drizzle-kit": "0.31.11",
     "eslint": "10.13.0",
+    "sharp": "0.35.5",
     "tsup": "9.0.0",
     "tsx": "4.23.15",
     "typescript": "5.9.3",

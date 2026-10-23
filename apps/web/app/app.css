@@ -1779,6 +1779,9 @@
 .visit-place-cover { margin: 0 0 1.2rem; }
 .visit-place-cover img { width: 100%; aspect-ratio: 2.5; object-fit: cover; border-radius: 14px; }
 .visit-place-cover figcaption { margin-top: .3rem; font-size: .65rem; color: var(--muted-foreground); text-align: right; }
+.photo-credit { display: block; font-size: .7rem; line-height: 1.4; color: var(--muted-foreground); }
+.photo-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.suggested-stop-list .photo-credit, .saved-place-grid .photo-credit { margin-top: .35rem; }
 .visit-place-picker { padding: 1rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
 .visit-place-picker summary { font-family: var(--font-serif); font-size: 1.1rem; cursor: pointer; }
 .visit-place-picker[open] > summary { margin-bottom: 1rem; }
@@ -1909,3 +1912,9 @@
 .auth-or { display: flex; align-items: center; gap: .8rem; margin: .1rem 0; font-size: .8rem; color: var(--muted-foreground); text-align: center; }
 .auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 .google-button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; min-height: 52px; }
+/* Acordeón del diálogo «Añadir una parada»: una sola sección abierta a la vez */
+.stop-section-head { display: flex; align-items: center; gap: .7rem; width: 100%; background: var(--surface-muted); border: 0; border-radius: 12px; padding: .85rem; font-family: var(--font-serif); font-size: 1rem; text-align: left; cursor: pointer; }
+.stop-section-head[aria-expanded="true"] { background: #e9ebdf; }
+.stop-section-chevron { margin-left: auto; transition: transform .18s ease; }
+.stop-section-head[aria-expanded="true"] .stop-section-chevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .stop-section-chevron { transition: none; } }

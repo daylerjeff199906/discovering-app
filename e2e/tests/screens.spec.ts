@@ -19,9 +19,9 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
   await signUpVerifyLogin(page, "pantallas");
 
   // Viaje automático (Iquitos) con propuesta aplicada
-  await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
+  await page.getByRole("link", { name: "Nueva aventura" }).first().click();
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("button", { name: "Crear viaje" }).click();
+  await page.getByRole("button", { name: "Crear aventura" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
   const dialog = page.getByRole("dialog", { name: "Armar una propuesta" });
@@ -65,7 +65,7 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
       if (name === "editor" && width === 1024) {
         // Sin tres columnas forzadas en tablet: la columna de preferencias se apila sobre el recorrido
         const prefs = await page.getByRole("heading", { name: "A tu manera" }).boundingBox();
-        const plan = await page.getByRole("region", { name: "Plan del viaje" }).or(page.getByLabel("Plan del viaje")).first().boundingBox();
+        const plan = await page.getByRole("region", { name: "Plan de la aventura" }).or(page.getByLabel("Plan de la aventura")).first().boundingBox();
         expect(prefs && plan && prefs.y < plan.y).toBeTruthy();
       }
       if ((width === 1440 || width === 390) && ["editor", "recorrido", "visita", "mis-viajes", "resumen"].includes(name)) await shot(page, `${name}-${width}`);

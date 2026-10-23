@@ -24,7 +24,7 @@ export function DeleteVisitButton({ journeyId, visitId, placeName }: { journeyId
     <Button size="icon" variant="ghost" className="text-danger" onClick={() => { remove.reset(); setOpen(true); }} title="Eliminar visita" aria-label={`Eliminar visita a ${placeName}`}><Trash2 className="size-4" aria-hidden="true" /></Button>
     <Dialog open={open} onClose={() => { if (!remove.isPending) setOpen(false); }} title="¿Eliminar esta visita del diario?" description={placeName}
       footer={<><Button variant="outline" disabled={remove.isPending} onClick={() => setOpen(false)}>Conservar visita</Button><Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate()}>Eliminar visita</Button></>}>
-      <p>Se eliminarán esta visita, su nota y sus fotos. El resto del diario y el plan del viaje se conservarán. Esta acción no se puede deshacer.</p>
+      <p>Se eliminarán esta visita, su nota y sus fotos. El resto del diario y el plan de la aventura se conservarán. Esta acción no se puede deshacer.</p>
       {remove.isError ? <Alert tone="danger" live="assertive" className="mt-4">{remove.error instanceof ApiError && remove.error.code === "MEDIA_IN_PUBLICATION" ? "Una foto de esta visita está en una publicación. Actualiza o retira esa publicación antes de eliminar la visita." : errorMessage(remove.error)}</Alert> : null}
     </Dialog>
   </>;

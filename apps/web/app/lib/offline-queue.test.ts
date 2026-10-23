@@ -41,7 +41,7 @@ describe("cola local (IndexedDB)", () => {
     expect(rest!.points.map((p) => p.seq)).toEqual([2, 3]); // lo no confirmado sigue en cola
   });
 
-  it("guarda visitas con su clientMutationId (idempotencia) y las separa por viaje", async () => {
+  it("guarda visitas con su clientMutationId (idempotencia) y las separa por aventura", async () => {
     const payload = { clientMutationId: "abcdefgh1234", placeId: "7d4a3c1e-5c52-4a3a-9a55-0f0b6e5d3a10", visitedAt: "2026-03-01T15:00:00.000Z", timezone: "UTC" } as never;
     await enqueueVisit(U, { clientMutationId: "abcdefgh1234", journeyId: J, recordingId: REC, payload });
     await enqueueVisit(U, { clientMutationId: "abcdefgh1234", journeyId: J, recordingId: REC, payload }); // reintento: no duplica

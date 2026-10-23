@@ -51,7 +51,7 @@ function Results({ filters }: { filters: Partial<ExploreQuery> }) {
   if (items.length === 0) {
     return (
       <EmptyState title="Aún no hay recorridos que coincidan" action={<Link to="/explorar" className={buttonClass({ variant: "outline" })}>Quitar filtros</Link>}>
-        Si buscas algo muy específico, prueba con menos filtros. Y si tienes un viaje para contar, ¡puedes publicar el primero!
+        Si buscas algo muy específico, prueba con menos filtros. Y si tienes una aventura para contar, ¡puedes publicar el primero!
       </EmptyState>
     );
   }

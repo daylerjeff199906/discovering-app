@@ -12,14 +12,14 @@ export class PlanningController {
 
   @Post()
   @HttpCode(200)
-  @Api({ summary: "Generar una propuesta determinista (sin LLM) a partir del catálogo; no modifica el viaje", body: proposalInputSchema, response: proposalDtoSchema })
+  @Api({ summary: "Generar una propuesta determinista (sin LLM) a partir del catálogo; no modifica la aventura", body: proposalInputSchema, response: proposalDtoSchema })
   propose(@CurrentUser() user: AuthUser, @Param("id", new ParseUUIDPipe()) id: string, @Body() body: ProposalInput) {
     return this.planning.propose(user, id, body);
   }
 
   @Post("apply")
   @HttpCode(200)
-  @Api({ summary: "Aplicar la propuesta revisada (409 si el viaje cambió mientras se calculaba)", body: applyProposalInputSchema })
+  @Api({ summary: "Aplicar la propuesta revisada (409 si la aventura cambió mientras se calculaba)", body: applyProposalInputSchema })
   apply(@CurrentUser() user: AuthUser, @Param("id", new ParseUUIDPipe()) id: string, @Body() body: z.infer<typeof applyProposalInputSchema>) {
     return this.planning.apply(user, id, body.proposal, body.expectedVersion);
   }

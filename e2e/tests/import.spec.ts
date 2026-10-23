@@ -15,8 +15,8 @@ const GPX = `<?xml version="1.0" encoding="UTF-8"?>
 test("importar un recorrido GPX: vista previa, confirmación y diario", async ({ page }) => {
   await signUpVerifyLogin(page, "import");
 
-  /* ── Enlace desde «Nuevo viaje» ── */
-  await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
+  /* ── Enlace desde «Nueva aventura» ── */
+  await page.getByRole("link", { name: "Nueva aventura" }).first().click();
   await page.getByRole("link", { name: "Importar un recorrido" }).click();
   await expect(page.getByRole("heading", { name: "Importar recorrido" })).toBeVisible();
   const submit = page.getByRole("button", { name: "Importar recorrido" });
@@ -38,15 +38,15 @@ test("importar un recorrido GPX: vista previa, confirmación y diario", async ({
   await expect(preview.getByText(/mar/i).first()).toBeVisible(); // fechas del archivo (14 mar)
   await expect(submit).toBeEnabled();
 
-  /* ── Confirmar: lleva al diario del viaje finalizado ── */
-  await page.getByLabel("Nombre del viaje").fill("Mi paseo importado");
+  /* ── Confirmar: lleva al diario de la aventura finalizado ── */
+  await page.getByLabel("Nombre de la aventura").fill("Mi paseo importado");
   await submit.click();
   await page.waitForURL(/\/app\/viajes\/[0-9a-f-]{36}$/);
   await expect(page.getByText("Mi paseo importado").first()).toBeVisible();
   await expect(page.getByText("Finalizado").first()).toBeVisible();
   await expect(page.getByText("Plaza de Armas").first()).toBeVisible();
 
-  /* ── Aparece en «Mis viajes» como finalizado ── */
+  /* ── Aparece en «Mis aventuras» como finalizada ── */
   await page.goto("/app/viajes");
   await expect(page.getByText("Mi paseo importado").first()).toBeVisible();
 });

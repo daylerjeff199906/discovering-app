@@ -19,7 +19,7 @@ export function Logo({ className, to = "/" }: { className?: string; to?: string 
 const PRIVATE_NAV = [
   { to: "/app/inicio", label: "Inicio", Icon: Home },
   { to: "/app/guardados", label: "Guardados", Icon: Bookmark },
-  { to: "/app/viajes/nuevo", label: "Nuevo viaje", Icon: Plus },
+  { to: "/app/viajes/nuevo", label: "Nueva aventura", Icon: Plus },
 ] as const;
 const PUBLIC_NAV = [
   { to: "/", label: "Inicio", Icon: Home },
@@ -120,7 +120,7 @@ function AccountPopover() {
       <div className="account-identity"><strong>{firstName}</strong><span>{me.email}</span></div>
       <nav aria-label="Opciones de usuario">
         <Link to="/app/inicio"><Home size={17} aria-hidden="true" /> Inicio</Link>
-        <Link to="/app/viajes"><MapIcon size={17} aria-hidden="true" /> Mis viajes</Link>
+        <Link to="/app/viajes"><MapIcon size={17} aria-hidden="true" /> Mis aventuras</Link>
         <Link to="/app/perfil"><UserIcon size={17} aria-hidden="true" /> Mi perfil</Link>
         <Link to="/app/cuenta"><Settings size={17} aria-hidden="true" /> Configuración de cuenta</Link>
         {me.role === "MODERATOR" ? <><Link to="/app/catalogo">Administrar catálogo</Link><Link to="/moderacion">Moderación</Link></> : null}

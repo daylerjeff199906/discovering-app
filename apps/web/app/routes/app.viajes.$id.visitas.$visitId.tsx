@@ -60,7 +60,7 @@ export default function Visita() {
       <PageHeader
         title={v.place.name}
         subtitle={`${formatDateTime(v.visitedAt, v.timezone)} · ${v.timezone}`}
-        actions={<><Link to={`/app/viajes/${id}`} className={buttonClass({ variant: "outline" })}>Volver al viaje</Link><Button variant="ghost" onClick={() => setConfirmDelete(true)}><Trash2 className="size-5" aria-hidden="true" /> Eliminar</Button></>}
+        actions={<><Link to={`/app/viajes/${id}`} className={buttonClass({ variant: "outline" })}>Volver a la aventura</Link><Button variant="ghost" onClick={() => setConfirmDelete(true)}><Trash2 className="size-5" aria-hidden="true" /> Eliminar</Button></>}
       />
       {search.get("nueva") ? <Alert tone="success" className="mb-4" title="Visita guardada">Añade fotos y una nota si quieres. Todo es opcional.</Alert> : null}
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">

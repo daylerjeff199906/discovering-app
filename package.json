@@ -20,6 +20,8 @@
     "db:migrate": "pnpm --filter @por-aqui/database db:migrate",
     "db:seed": "pnpm --filter @por-aqui/database db:seed",
     "db:reset": "pnpm --filter @por-aqui/database db:reset",
+    "db:seed:iquitos": "pnpm --filter @por-aqui/database db:seed:iquitos",
+    "db:images:iquitos": "pnpm --filter @por-aqui/database db:images:iquitos",
     "dev:packages": "turbo run watch --parallel",
     "preview": "node scripts/preview.mjs",
     "check:env": "node scripts/check-env.mjs"

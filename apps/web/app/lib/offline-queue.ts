@@ -142,7 +142,7 @@ export async function discardPending(userId: string, recordingId: string, journe
   for (const v of await d.getAllFromIndex("visits", "byJourney", journeyId)) await d.delete("visits", v.clientMutationId);
 }
 
-/** Retira también los segmentos locales cuando se elimina definitivamente un viaje. */
+/** Retira también los segmentos locales cuando se elimina definitivamente una aventura. */
 export async function discardJourneyData(userId: string, journeyId: string, recordingId?: string): Promise<void> {
   const d = await db(userId);
   for (const v of await d.getAllFromIndex("visits", "byJourney", journeyId)) await d.delete("visits", v.clientMutationId);

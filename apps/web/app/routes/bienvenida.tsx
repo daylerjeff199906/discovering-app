@@ -157,7 +157,7 @@ export default function Bienvenida() {
   return (
     <div className="onboarding-layout">
       <aside className="onboarding-aside">
-        <p className="eyebrow">Un viaje muy tuyo</p>
+        <p className="eyebrow">Una aventura muy tuyo</p>
         <h2>
           Iquitos tiene mil historias.
           <br />

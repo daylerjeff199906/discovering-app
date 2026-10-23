@@ -32,7 +32,7 @@ export const defaultPreferences = (): JourneyPreferences => ({ interests: [], pa
 
 export async function loadJourneyDto(exec: DbExecutor, journeyId: string, ownerId: string): Promise<JourneyDto> {
   const [j] = await exec.select().from(journeys).where(eq(journeys.id, journeyId)).limit(1);
-  if (!j || j.ownerId !== ownerId) throw notFound("No encontramos ese viaje.");
+  if (!j || j.ownerId !== ownerId) throw notFound("No encontramos esa aventura.");
   return buildJourneyDto(exec, j);
 }
 

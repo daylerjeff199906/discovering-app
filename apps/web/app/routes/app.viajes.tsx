@@ -13,7 +13,7 @@ import { seoMeta } from "../lib/seo";
 import type { Route } from "./+types/app.viajes";
 
 export function meta(_: Route.MetaArgs) {
-  return seoMeta({ title: "Mis viajes — Por aquí", noindex: true });
+  return seoMeta({ title: "Mis aventuras — Por aquí", noindex: true });
 }
 
 const FILTERS: { id: "all" | JourneyStatus; label: string }[] = [
@@ -45,17 +45,17 @@ export default function MisViajes() {
   return (
     <>
       <p className="eyebrow mb-2">Tu colección de caminos</p>
-      <PageHeader title="Mis viajes" subtitle="Los que sueñas, los que vives y los que siempre recordarás." actions={<Link to="/app/viajes/nuevo" className={buttonClass({})}><Plus className="size-5" aria-hidden="true" /> Nuevo viaje</Link>} />
+      <PageHeader title="Mis aventuras" subtitle="Las que sueñas, las que vives y las que siempre recordarás." actions={<Link to="/app/viajes/nuevo" className={buttonClass({})}><Plus className="size-5" aria-hidden="true" /> Nueva aventura</Link>} />
       <Link to="/explorar" className="portal-inspiration"><span><span className="eyebrow">Ideas para tu próxima historia</span><strong>Descubre Iquitos en el portal</strong><span>Inspírate con lugares y recorridos para hacerlos tuyos.</span></span><ArrowUpRight aria-hidden="true" /></Link>
       <div className="journey-filters mb-6 overflow-x-auto pb-1">
         <Tabs className="journey-filter-tabs" label="Filtrar por estado" value={filter} onChange={(v) => setFilter(v as typeof filter)} tabs={FILTERS} />
       </div>
-      {q.isPending ? <LoadingBlock label="Cargando tus viajes…" /> : null}
+      {q.isPending ? <LoadingBlock label="Cargando tus aventuras…" /> : null}
       {q.isError ? <QueryError error={q.error} retry={() => q.refetch()} /> : null}
       {duplicate.isError || archive.isError ? <Alert tone="danger" live="assertive" className="mb-4">{errorMessage(duplicate.error ?? archive.error)}</Alert> : null}
       {q.data && items.length === 0 ? (
-        <EmptyState icon={<MapPinned size={38} strokeWidth={1.1} />} title={filter === "all" ? "Tu primera historia está por empezar" : "Este capítulo aún está por escribir"} action={<Link to="/app/viajes/nuevo" className={buttonClass({})}>Crear mi primer viaje</Link>}>
-          Un destino que te llama, una calle por descubrir. Crea un viaje y empieza a guardar lo que te hace sentir.
+        <EmptyState icon={<MapPinned size={38} strokeWidth={1.1} />} title={filter === "all" ? "Tu primera historia está por empezar" : "Este capítulo aún está por escribir"} action={<Link to="/app/viajes/nuevo" className={buttonClass({})}>Crear mi primer aventura</Link>}>
+          Un destino que te llama, una calle por descubrir. Crea una aventura y empieza a guardar lo que te hace sentir.
         </EmptyState>
       ) : null}
       <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
@@ -75,7 +75,7 @@ export default function MisViajes() {
               {j.publicationVisibility && j.publicationVisibility !== "PRIVATE" ? <p className="text-sm font-semibold text-success">{j.publicationVisibility === "PUBLIC" ? "Publicado en la comunidad" : "Compartido por enlace"}</p> : null}
               <div className="journey-card-actions mt-auto flex flex-wrap gap-2 pt-1">
                 <Link to={p.to} title={p.label} aria-label={`${p.label}: ${j.title}`} className={buttonClass({ size: "icon" })}>{j.status === "IN_PROGRESS" || j.status === "PAUSED" ? <Play size={18} aria-hidden="true" /> : j.status === "DRAFT" || j.status === "PLANNED" ? <Pencil size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</Link>
-                <Button size="icon" variant="outline" title="Duplicar viaje" aria-label={`Duplicar ${j.title}`} loading={duplicate.isPending && duplicate.variables === j.id} onClick={() => duplicate.mutate(j.id)}><Copy className="size-4" aria-hidden="true" /></Button>
+                <Button size="icon" variant="outline" title="Duplicar aventura" aria-label={`Duplicar ${j.title}`} loading={duplicate.isPending && duplicate.variables === j.id} onClick={() => duplicate.mutate(j.id)}><Copy className="size-4" aria-hidden="true" /></Button>
                 <Button size="icon" variant="ghost" title={j.status === "ARCHIVED" ? "Desarchivar" : "Archivar"} aria-label={`${j.status === "ARCHIVED" ? "Desarchivar" : "Archivar"} ${j.title}`} loading={archive.isPending && archive.variables?.id === j.id} onClick={() => archive.mutate({ id: j.id, archived: j.status === "ARCHIVED" })}>
                   {j.status === "ARCHIVED" ? <ArchiveRestore className="size-4" aria-hidden="true" /> : <Archive className="size-4" aria-hidden="true" />}
                 </Button>

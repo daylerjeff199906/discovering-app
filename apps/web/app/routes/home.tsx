@@ -90,7 +90,7 @@ function DestinationForm() {
             <option key={d.label} value={d.locality} label={d.label} />
           ))}
         </datalist>
-        <button type="submit" aria-label="Buscar destino y planear viaje">
+        <button type="submit" aria-label="Buscar destino y planear aventura">
           <ArrowRight size={20} aria-hidden="true" />
         </button>
       </div>
@@ -103,7 +103,7 @@ function DestinationForm() {
           <span>
             Planear
             <br />
-            un viaje
+            una aventura
           </span>
           <ArrowRight className="action-arrow" size={22} aria-hidden="true" />
         </button>

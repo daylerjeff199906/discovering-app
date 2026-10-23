@@ -1,12 +1,13 @@
 import type { PlaceDto } from "@por-aqui/contracts";
 import { Alert, Button, Dialog, Field, Input, Tabs } from "@por-aqui/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bookmark, MapPin, Plus } from "lucide-react";
+import { Bookmark, ChevronDown, MapPin, MapPinPlus, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useTravelCatalog } from "../lib/catalog";
 import { capabilitiesQuery } from "../lib/query";
 import { MapPanel } from "./map";
+import { PhotoCredit } from "./photo-credit";
 
 export function AddStopDialog({ open, onClose, near, destinationLabel, onPick, busy }: { open: boolean; onClose: () => void; near?: { lng: number; lat: number } | null; destinationLabel?: string; onPick: (placeId: string) => Promise<unknown>; busy?: boolean }) {
   const qc = useQueryClient();
@@ -14,7 +15,8 @@ export function AddStopDialog({ open, onClose, near, destinationLabel, onPick, b
   const [tab, setTab] = useState("near");
   const [q, setQ] = useState("");
   const [submitted, setSubmitted] = useState("");
-  const [personalOpen, setPersonalOpen] = useState(false);
+  // Acordeón: solo una sección abierta a la vez (elegir un lugar existente o crear uno nuevo).
+  const [section, setSection] = useState<"pick" | "create">("pick");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [pickError, setPickError] = useState("");
   const caps = useQuery(capabilitiesQuery());
@@ -33,7 +35,9 @@ export function AddStopDialog({ open, onClose, near, destinationLabel, onPick, b
   const rows = tab === "near" ? search.data : saved.data?.filter((p) => !q.trim() || p.name.toLowerCase().includes(q.toLowerCase()));
   const pending = tab === "near" ? search.isPending : saved.isPending;
   return <Dialog open={open} onClose={onClose} variant="sheet" title="Añadir una parada" className="add-stop-editor">
-    <div className="grid gap-4">
+    <div className="grid gap-3">
+      <button type="button" className="stop-section-head" aria-expanded={section === "pick"} aria-controls="stop-section-pick" onClick={() => setSection("pick")}><Search size={18} aria-hidden="true" /> Buscar y elegir un lugar <ChevronDown className="stop-section-chevron" size={18} aria-hidden="true" /></button>
+      {section === "pick" ? <div id="stop-section-pick" className="grid gap-4">
       <form className="flex gap-2" role="search" onSubmit={(e) => { e.preventDefault(); setSubmitted(q.trim()); }}><Input aria-label="Buscar un lugar para añadir" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca un lugar" type="search" /><Button type="submit" variant="outline" size="sm">Buscar</Button></form>
       <p className="text-xs text-muted-foreground">Ej. museo, malecón, mercado, naturaleza…</p>
       <Tabs label="Lugares sugeridos" value={tab} onChange={setTab} tabs={[{ id: "near", label: <span className="inline-flex items-center gap-2"><MapPin size={17} />Cercanos</span> }, { id: "saved", label: <span className="inline-flex items-center gap-2"><Bookmark size={17} />Guardados</span> }]} />
@@ -42,11 +46,13 @@ export function AddStopDialog({ open, onClose, near, destinationLabel, onPick, b
       {rows?.length === 0 ? <p className="text-sm text-muted-foreground">{tab === "saved" ? "Aún no guardaste lugares. Usa el marcador de un lugar para tenerlo aquí." : "No hay resultados. Prueba otra búsqueda o crea un lugar personal."}</p> : null}
       <ul className="suggested-stop-list">{rows?.map((p) => { const visual = catalog.data?.places.find((v) => v.id === p.id); const marked = saved.data?.some((v) => v.id === p.id); return <li key={p.id}>
         {visual ? <img src={visual.imageUrl} alt="" width={120} height={125} /> : <div className="place-thumb-placeholder"><MapPin aria-hidden="true" /></div>}
-        <div><h3>{p.name}</h3><small>{visual?.category ?? "Lugar personal"}{p.distanceM !== null ? ` · ${Math.round(p.distanceM)} m` : ""}</small><p>{visual?.description ?? p.description ?? p.locality}</p></div>
+        <div><h3>{p.name}</h3><small>{visual?.category ?? "Lugar personal"}{p.distanceM !== null ? ` · ${Math.round(p.distanceM)} m` : ""}</small><p>{visual?.description ?? p.description ?? p.locality}</p><PhotoCredit credit={visual?.imageCredit} compact /></div>
         <div className="suggested-stop-actions"><Button size="icon" variant="primary" title={`Añadir ${p.name}`} aria-label={`Añadir ${p.name}`} loading={loadingId === p.id} disabled={busy || Boolean(loadingId)} onClick={() => void pick(p.id)}><Plus size={19} aria-hidden="true" /></Button><Button size="icon" variant="ghost" aria-pressed={Boolean(marked)} title={marked ? "Quitar de guardados" : "Guardar lugar"} aria-label={`${marked ? 'Quitar de guardados' : 'Guardar'} ${p.name}`} disabled={bookmark.isPending} onClick={() => bookmark.mutate(p)}><Bookmark size={17} fill={marked ? "currentColor" : "none"} aria-hidden="true" /></Button></div>
       </li>; })}</ul>
       {pickError || bookmark.isError ? <Alert tone="danger" live="assertive">{pickError || errorMessage(bookmark.error)}</Alert> : null}
-      <details open={personalOpen} onToggle={(e) => setPersonalOpen(e.currentTarget.open)} className="create-stop-panel"><summary><MapPin size={18} aria-hidden="true" /> Crear lugar nuevo</summary><div className="grid gap-3 mt-3">
+      </div> : null}
+      <button type="button" className="stop-section-head" aria-expanded={section === "create"} aria-controls="stop-section-create" onClick={() => setSection("create")}><MapPinPlus size={18} aria-hidden="true" /> Crear lugar nuevo <ChevronDown className="stop-section-chevron" size={18} aria-hidden="true" /></button>
+      {section === "create" ? <div id="stop-section-create" className="grid gap-3">
         <Field label="Nombre del lugar" required>{(c) => <Input {...c} value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ej. Mi rincón junto al río" />}</Field>
         {caps.data?.geocoder.available ? <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); setGeo((e.currentTarget.elements.namedItem('address') as HTMLInputElement).value); }}><Input name="address" aria-label="Buscar dirección" /><Button type="submit" variant="outline">Buscar</Button></form> : null}
         {geocode.data?.results.map((r) => <button key={r.label} type="button" className="text-left underline" onClick={() => { setPoint({ lng: r.lng, lat: r.lat }); setLng(String(r.lng)); setLat(String(r.lat)); }}>{r.label}</button>)}
@@ -56,7 +62,7 @@ export function AddStopDialog({ open, onClose, near, destinationLabel, onPick, b
         <p className="text-xs text-muted-foreground">Este lugar será personal y privado.</p>
         {create.isError ? <Alert tone="danger" live="assertive">{errorMessage(create.error)}</Alert> : null}
         <Button disabled={!name.trim() || !point} loading={create.isPending || busy} onClick={() => create.mutate()}>Crear lugar y añadir <Plus size={18} aria-hidden="true" /></Button>
-      </div></details>
+      </div> : null}
     </div>
   </Dialog>;
 }

@@ -195,7 +195,7 @@ export default function Recorrido() {
   if (journey.isError || !j) return <QueryError error={journey.error} retry={() => journey.refetch()} />;
 
   if (!rec) {
-    if (j.status === "ARCHIVED") return <EmptyState title="Este viaje está archivado" action={<Link to="/app/viajes" className={buttonClass({})}>Volver a mis viajes</Link>}>Desarchívalo desde Mis viajes para iniciar el recorrido.</EmptyState>;
+    if (j.status === "ARCHIVED") return <EmptyState title="Esta aventura está archivada" action={<Link to="/app/viajes" className={buttonClass({})}>Volver a mis aventuras</Link>}>Desarchívala desde Mis aventuras para iniciar el recorrido.</EmptyState>;
     return (
       <StartAdventure journeyId={id} hasStops={flattenStops(j).length > 0} defaultFree={j.creationMode === "FREE" || j.preferences.explorationMode === "FREE"} pending={start.isPending} error={start.error} onStart={(choice) => start.mutate(choice)} />
     );

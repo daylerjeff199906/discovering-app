@@ -5,9 +5,14 @@ export const catalogCitySchema = z.object({
   description: z.string().max(1000), imageUrl: image, lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), enabled: z.boolean(),
   highlights: z.array(z.string().max(100)).max(6),
 });
+/** Atribución de una imagen con licencia libre (p. ej. Wikimedia Commons). */
+export const imageCreditSchema = z.object({
+  title: z.string().max(200), author: z.string().max(200), license: z.string().max(60),
+  licenseUrl: z.string().max(500).regex(/^https:\/\/[^\s]+$/), sourceUrl: z.string().max(500).regex(/^https:\/\/[^\s]+$/),
+});
 export const catalogPlaceSchema = z.object({
   id: z.uuid(), cityId: z.string().max(80), name: z.string().trim().min(1).max(120), description: z.string().max(1000),
-  category: z.string().max(100), imageUrl: image, lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
+  category: z.string().max(100), imageUrl: image, imageCredit: imageCreditSchema.optional(), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
   enabled: z.boolean(), interests: z.array(z.string().max(40)).max(20),
 });
 export const travelCatalogSchema = z.object({
@@ -21,10 +26,11 @@ export const travelCatalogSchema = z.object({
   cities: z.array(catalogCitySchema).min(1).max(100), places: z.array(catalogPlaceSchema).max(1000),
 }).superRefine((v, ctx) => {
   if (new Set(v.cities.map((c) => c.id)).size !== v.cities.length || new Set(v.places.map((p) => p.id)).size !== v.places.length) ctx.addIssue({ code: "custom", message: "Los identificadores deben ser únicos" });
-  if (new Set(v.modes.map((m) => m.id)).size !== 3) ctx.addIssue({ code: "custom", message: "Configura las tres formas de crear un viaje" });
+  if (new Set(v.modes.map((m) => m.id)).size !== 3) ctx.addIssue({ code: "custom", message: "Configura las tres formas de crear una aventura" });
   if (!v.cities.some((c) => c.enabled)) ctx.addIssue({ code: "custom", message: "Activa al menos una ciudad" });
   if (v.places.some((p) => !v.cities.some((c) => c.id === p.cityId))) ctx.addIssue({ code: "custom", message: "Cada lugar debe pertenecer a una ciudad" });
 });
 export type TravelCatalog = z.infer<typeof travelCatalogSchema>;
 export type CatalogCity = z.infer<typeof catalogCitySchema>;
 export type CatalogPlace = z.infer<typeof catalogPlaceSchema>;
+export type ImageCredit = z.infer<typeof imageCreditSchema>;

@@ -29,7 +29,7 @@ function CheckEmail({ email, returnTo }: { email: string; returnTo: string }) {
     <div className="flex flex-col gap-4" role="status">
       <span className="flex size-16 items-center justify-center rounded-full bg-sage"><MailCheck size={28} strokeWidth={1.4} aria-hidden="true" /></span>
       <p className="eyebrow mt-3">Solo un paso más</p>
-      <h1>Un mensaje para<br /><em>empezar el viaje.</em></h1>
+      <h1>Un mensaje para<br /><em>empezar la aventura.</em></h1>
       <p>Te enviamos un enlace de confirmación a <strong>{email}</strong>. Ábrelo y pulsa «Confirmar mi correo». El enlace vence en 24 horas.</p>
       <p className="text-sm text-muted-foreground">Si no lo ves, mira en spam. Por seguridad, si ese correo ya tenía cuenta te avisaremos por correo en lugar de crear otra.</p>
       <Button variant="outline" disabled={cooldown > 0} loading={resend.isPending} onClick={() => resend.mutate()}>

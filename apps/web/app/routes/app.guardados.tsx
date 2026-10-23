@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTravelCatalog } from "../lib/catalog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
+import { PhotoCredit } from "../components/photo-credit";
 import { RouteCard } from "../components/route-card";
 import { LoadingBlock, PageHeader, QueryError } from "../components/shell";
 import { api, errorMessage } from "../lib/api";
@@ -30,9 +31,9 @@ export default function Guardados() {
       <Tabs className="mb-5" label="Tipo de guardados" value={tab} onChange={setTab} tabs={[{ id: "places", label: "Lugares" }, { id: "stories", label: "Historias" }]} />
       {tab === "places" ? <>
         {places.isPending ? <LoadingBlock /> : null}{places.isError ? <QueryError error={places.error} retry={() => places.refetch()} /> : null}
-        {places.data?.length === 0 ? <EmptyState title="Tus lugares favoritos, a mano">Guarda lugares al añadir paradas a un viaje. Los encontrarás aquí y en la pestaña Guardados del editor.</EmptyState> : null}
+        {places.data?.length === 0 ? <EmptyState title="Tus lugares favoritos, a mano">Guarda lugares al añadir paradas a una aventura. Los encontrarás aquí y en la pestaña Guardados del editor.</EmptyState> : null}
         {removePlace.isError ? <p role="alert" className="text-danger">{errorMessage(removePlace.error)}</p> : null}
-        <ul className="saved-place-grid">{places.data?.map((p) => { const visual = catalog.data?.places.find((v) => v.id === p.id); return <li key={p.id}>{visual ? <img src={visual.imageUrl} alt="" width={400} height={200} /> : null}<div><h2>{p.name}</h2><p>{p.description ?? p.locality}</p><Button size="icon" variant="ghost" title="Quitar lugar guardado" aria-label={`Quitar de guardados ${p.name}`} loading={removePlace.isPending && removePlace.variables === p.id} onClick={() => removePlace.mutate(p.id)}><BookmarkX size={18} aria-hidden="true" /></Button></div></li>; })}</ul>
+        <ul className="saved-place-grid">{places.data?.map((p) => { const visual = catalog.data?.places.find((v) => v.id === p.id); return <li key={p.id}>{visual ? <img src={visual.imageUrl} alt="" width={400} height={200} /> : null}<div><h2>{p.name}</h2><p>{p.description ?? p.locality}</p><PhotoCredit credit={visual?.imageCredit} compact /><Button size="icon" variant="ghost" title="Quitar lugar guardado" aria-label={`Quitar de guardados ${p.name}`} loading={removePlace.isPending && removePlace.variables === p.id} onClick={() => removePlace.mutate(p.id)}><BookmarkX size={18} aria-hidden="true" /></Button></div></li>; })}</ul>
       </> : <>
       {q.isPending ? <LoadingBlock /> : null}
       {q.isError ? <QueryError error={q.error} retry={() => q.refetch()} /> : null}

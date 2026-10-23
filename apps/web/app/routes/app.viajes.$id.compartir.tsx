@@ -155,7 +155,7 @@ export default function Compartir() {
       {[setVis, unpublish].map((m, i) => m.isError ? <Alert key={i} tone="danger" className="mb-4" live="assertive">{errorMessage(m.error)}</Alert> : null)}
 
       {d.candidates.length === 0 ? (
-        <EmptyState title="No hay visitas para publicar" action={<Link to={`/app/viajes/${id}/visitas/nueva`} className="font-semibold">Añadir una visita</Link>}>Registra al menos una visita en este viaje.</EmptyState>
+        <EmptyState title="No hay visitas para publicar" action={<Link to={`/app/viajes/${id}/visitas/nueva`} className="font-semibold">Añadir una visita</Link>}>Registra al menos una visita en esta aventura.</EmptyState>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); if (valid) setConfirm(true); }} className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
           <div className="flex flex-col gap-4">
@@ -175,7 +175,7 @@ export default function Compartir() {
             </fieldset>
             <label className={cn("flex items-start gap-3 rounded-control border p-3", !d.hasTrack && "opacity-60")}>
               <input type="checkbox" className="mt-1 size-5 accent-[var(--primary)]" disabled={!d.hasTrack} checked={exactTrack} onChange={(e) => setExactTrack(e.target.checked)} />
-              <span><span className="font-semibold">Compartir mi trayecto GPS</span><span className="block text-sm text-muted-foreground">{d.hasTrack ? "Desactivado por omisión: mostraría por dónde caminaste con detalle (simplificado). Actívalo solo si quieres." : "No registraste GPS en este viaje."}</span></span>
+              <span><span className="font-semibold">Compartir mi trayecto GPS</span><span className="block text-sm text-muted-foreground">{d.hasTrack ? "Desactivado por omisión: mostraría por dónde caminaste con detalle (simplificado). Actívalo solo si quieres." : "No registraste GPS en esta aventura."}</span></span>
             </label>
           </div>
 

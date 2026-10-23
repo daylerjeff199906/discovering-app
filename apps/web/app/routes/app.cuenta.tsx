@@ -99,7 +99,7 @@ export default function Cuenta() {
         <Card className="p-5">
           <h2 className="text-xl">Privacidad</h2>
           <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
-            <li>Tus viajes, visitas, fotos y notas son privados por omisión.</li>
+            <li>Tus aventuras, visitas, fotos y notas son privadas por omisión.</li>
             <li>Al publicar eliges qué se muestra; el trayecto GPS exacto está desactivado por omisión.</li>
             <li>Nunca mostramos tu correo ni tus fotos originales (con EXIF).</li>
           </ul>

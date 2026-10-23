@@ -71,7 +71,7 @@ export class PublicationsService {
 
   private async ownedJourney(exec: DbExecutor, userId: string, journeyId: string) {
     const [j] = await exec.select().from(journeys).where(and(eq(journeys.id, journeyId), eq(journeys.ownerId, userId))).limit(1);
-    if (!j) throw notFound("No encontramos ese viaje.");
+    if (!j) throw notFound("No encontramos esa aventura.");
     return j;
   }
 
@@ -104,7 +104,7 @@ export class PublicationsService {
     const media = await loadVisitMedia(this.db, rows.map((r) => r.id));
 
     let blockedReason: string | null = null;
-    if (!rec) blockedReason = "Todavía no registraste visitas en este viaje.";
+    if (!rec) blockedReason = "Todavía no registraste visitas en esta aventura.";
     else if (rec.status !== "COMPLETED") blockedReason = "Finaliza el recorrido para poder publicarlo.";
     else if (rows.length === 0) blockedReason = "Registra al menos una visita para publicar.";
     else if (!user.emailVerified) blockedReason = "Verifica tu correo para publicar.";
@@ -149,23 +149,23 @@ export class PublicationsService {
 
   /**
    * Publicar = crear una INSTANTÁNEA sanitizada y seleccionada. Cambios privados posteriores no aparecen
-   * hasta «Actualizar publicación». Todo ocurre en una transacción con el viaje bloqueado.
+   * hasta «Actualizar publicación». Todo ocurre en una transacción con la aventura bloqueada.
    */
   async publish(user: AuthUser, journeyId: string, input: PublishInput): Promise<PublicationStateDto> {
     return this.db.transaction(async (tx) => {
       const [journey] = await tx.select().from(journeys).where(and(eq(journeys.id, journeyId), eq(journeys.ownerId, user.id))).for("update");
-      if (!journey) throw notFound("No encontramos ese viaje.");
+      if (!journey) throw notFound("No encontramos esa aventura.");
       const [rec] = await tx.select().from(recordings).where(eq(recordings.journeyId, journeyId));
       if (!rec || rec.status !== "COMPLETED") throw badRequest("NOT_COMPLETED", "Finaliza el recorrido antes de publicarlo.");
 
       const [existing] = await tx.select().from(publications).where(eq(publications.journeyId, journeyId)).for("update");
       if (existing && input.expectedRevision !== undefined && input.expectedRevision !== existing.revision) throw versionConflict(existing.revision);
 
-      // Visitas elegidas: únicas, de este viaje.
+      // Visitas elegidas: únicas, de esta aventura.
       const visitIds = input.entries.map((e) => e.visitId);
       if (new Set(visitIds).size !== visitIds.length) throw badRequest("ENTRIES_DUPLICATED", "Hay visitas repetidas en la selección.");
       const visitRows = await tx.select().from(visits).where(and(inArray(visits.id, visitIds), eq(visits.journeyId, journeyId), eq(visits.ownerId, user.id)));
-      if (visitRows.length !== visitIds.length) throw badRequest("ENTRIES_INVALID", "Alguna visita no pertenece a este viaje.");
+      if (visitRows.length !== visitIds.length) throw badRequest("ENTRIES_INVALID", "Alguna visita no pertenece a esta aventura.");
       const visitById = new Map(visitRows.map((v) => [v.id, v]));
 
       // Fotos elegidas: deben ser de ESA visita, del autor y estar READY.

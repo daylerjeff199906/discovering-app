@@ -15,3 +15,7 @@ La imagen de la plaza es una miniatura de 1280 px servida por Wikimedia. Las otr
 `portal-peru.webp` es el banner del inicio del usuario: mapa ilustrado del Perú con Iquitos, Tarapoto, Lima, Cusco, Arequipa y Puno. También es una imagen conceptual generada con IA.
 
 `follow-route-iquitos.png` y `explore-freely-iquitos.png` se generaron con la herramienta integrada de imágenes para las tarjetas de aventura. Son escenas conceptuales de la Amazonía de Iquitos. La app utiliza sus versiones WebP optimizadas. Los prompts completos están en `docs/ILLUSTRATIONS.md`.
+
+## Lugares del catálogo
+
+Las fotos de los lugares reales de Iquitos viven en `lugares/` (ver `lugares/README.md`, generado por `pnpm db:images:iquitos`, con autor, licencia y fuente de cada una).

@@ -9,7 +9,7 @@ export function useJourney(id: string) {
 }
 
 /**
- * Mutaciones sobre un viaje. Se ejecutan EN SERIE por viaje (`scope`) y cada una lee la versión más reciente
+ * Mutaciones sobre una aventura. Se ejecutan EN SERIE por aventura (`scope`) y cada una lee la versión más reciente
  * de la caché al ejecutarse, de modo que ediciones rápidas consecutivas no se pisan a sí mismas.
  * Si el servidor responde 409 (otra pestaña/dispositivo editó), se recarga la versión vigente y se avisa.
  */
@@ -20,7 +20,7 @@ export function useJourneyMutation<V>(id: string, run: (vars: V, current: Journe
     scope: { id: `journey:${id}` },
     mutationFn: async (vars: V) => {
       const current = qc.getQueryData<JourneyDto>(qk.journey(id));
-      if (!current) throw new Error("El viaje todavía no se cargó");
+      if (!current) throw new Error("La aventura todavía no se cargó");
       if (!opts.silent) setSave("saving");
       return run(vars, current);
     },

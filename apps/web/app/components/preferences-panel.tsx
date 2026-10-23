@@ -7,7 +7,7 @@ import { useState } from "react";
 import { MapPin } from "lucide-react";
 import { DestinationPicker } from "./destination-picker";
 
-/** Preferencias del viaje (autoguardado por el editor). */
+/** Preferencias de la aventura (autoguardado por el editor). */
 export function PreferencesPanel({ value, onChange }: { value: JourneyPreferences; onChange: (next: JourneyPreferences) => void }) {
   const interests = useQuery(interestsQuery());
   const [cityOpen, setCityOpen] = useState(false);

@@ -57,7 +57,7 @@ export class PlanningService {
     );
   }
 
-  /** Aplica una propuesta de forma atómica. Si el viaje cambió mientras se calculaba, responde 409 y no pisa nada. */
+  /** Aplica una propuesta de forma atómica. Si la aventura cambió mientras se calculaba, responde 409 y no pisa nada. */
   async apply(user: AuthUser, journeyId: string, proposal: ProposalDto, expectedVersion: number): Promise<JourneyDto> {
     if (proposal.days.length === 0) throw badRequest("PROPOSAL_EMPTY", "La propuesta no tiene días para aplicar.");
     const result = await this.db.transaction(async (tx) => {

@@ -54,7 +54,7 @@ export async function signUpVerifyLogin(page: Page, prefix = "e2e"): Promise<Acc
   await page.getByLabel("Confirmar contraseña").fill(PASSWORD);
   await page.getByRole("checkbox", { name: /Acepto los/ }).check();
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
-  await expect(page.getByRole("heading", { name: "Un mensaje para empezar el viaje." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Un mensaje para empezar la aventura." })).toBeVisible();
 
   const text = await latestMail(email);
   const link = /(https?:\/\/\S+\/verificar-correo\?token=[A-Za-z0-9_%-]+)/.exec(text)?.[1];
@@ -69,7 +69,7 @@ export async function signUpVerifyLogin(page: Page, prefix = "e2e"): Promise<Acc
   await page.getByRole("button", { name: "Ingresar" }).click();
   await page.waitForURL(/\/bienvenida/);
   await page.getByRole("button", { name: "Lo haré después" }).click();
-  await page.waitForURL(/\/app\/(viajes|inicio)/);
+  await page.waitForURL(/\/app\/(aventuras|inicio)/);
   return { name, username, email };
 }
 

@@ -1,0 +1,616 @@
+{
+  "$comment": "Lugares reales de Iquitos (Loreto, Perú) para el catálogo. Descripciones redactadas para Por aquí a partir de las fuentes citadas (no son copia). Las coordenadas son aproximadas y se contrastaron entre Wikipedia/Wikidata, OpenStreetMap y los geoetiquetados de Wikimedia Commons. Los bloques image.* los rellena `pnpm db:images:iquitos` desde la API de Wikimedia Commons; no los edites a mano. Datos geográficos © colaboradores de OpenStreetMap (ODbL).",
+  "version": 1,
+  "provider": "iquitos-catalog",
+  "cityId": "iquitos",
+  "verifiedOn": "2026-10-23",
+  "places": [
+    {
+      "key": "iq-plaza-armas",
+      "supersedesDemo": "iq-plaza-armas",
+      "name": "Plaza de Armas de Iquitos",
+      "category": "Plaza histórica",
+      "description": "Es el espacio público más antiguo de la ciudad: existe desde la fundación de Iquitos, en 1764, y ocupa una manzana completa. Entre palmeras y jardines, es el escenario de los actos cívicos y el punto de partida natural para recorrer el centro histórico, porque a su alrededor se levantan la Catedral, la Casa de Fierro y otras casonas de la época del caucho.",
+      "lat": -3.7493,
+      "lng": -73.2444,
+      "locality": "Iquitos",
+      "address": "Centro histórico de Iquitos",
+      "interests": [
+        "historia",
+        "arquitectura",
+        "cultura",
+        "fotografia"
+      ],
+      "typicalVisitMinutes": 30,
+      "sources": [
+        {
+          "label": "Wikipedia: Plaza de Armas de Iquitos",
+          "url": "https://es.wikipedia.org/wiki/Plaza_de_Armas_de_Iquitos"
+        },
+        {
+          "label": "OpenStreetMap (Nominatim)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.7493&mlon=-73.2444#map=18/-3.7493/-73.2444"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Iquitos-Plaza de Armas-1.JPG",
+        "file": "/images/lugares/iq-plaza-armas.webp",
+        "width": 1280,
+        "height": 853,
+        "sha256": "9f9fcfa53858ee4f1c9d4e052199dbd6d3fa418d43633056e466541c1c887086",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Iquitos-Plaza de Armas-1",
+          "author": "Maurice Chédel",
+          "license": "CC BY 3.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iquitos-Plaza_de_Armas-1.JPG"
+        }
+      }
+    },
+    {
+      "key": "iq-casa-fierro",
+      "supersedesDemo": "iq-casa-fierro",
+      "name": "Casa de Fierro",
+      "category": "Patrimonio arquitectónico",
+      "description": "Casona prefabricada de placas de hierro levantada en 1890, durante la fiebre del caucho, y símbolo de la ciudad. Muchos la llaman «Casa Eiffel», aunque ese nombre es de uso popular. Sus muros, techo y balcones de metal la convierten en una de las construcciones civiles más singulares del Perú y en una parada obligada para fotografiar junto a la Plaza de Armas.",
+      "lat": -3.7499,
+      "lng": -73.244,
+      "locality": "Iquitos",
+      "address": "Jr. Próspero con Jr. Putumayo, centro histórico",
+      "interests": [
+        "arquitectura",
+        "historia",
+        "fotografia"
+      ],
+      "typicalVisitMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Casa de Fierro",
+          "url": "https://es.wikipedia.org/wiki/Casa_de_Fierro"
+        },
+        {
+          "label": "OpenStreetMap (Nominatim)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.7499&mlon=-73.2441#map=18/-3.7499/-73.2441"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Iquitos Casa de Hierro01.jpg",
+        "file": "/images/lugares/iq-casa-fierro.webp",
+        "width": 1280,
+        "height": 848,
+        "sha256": "ab22bf8f07cb2f102486f1a0bb3c8963c2e3f5799a8fb75d57087e0cd6514b9a",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Iquitos Casa de Hierro01",
+          "author": "Håkan Svensson (Xauxa)",
+          "license": "CC BY 2.5",
+          "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iquitos_Casa_de_Hierro01.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-catedral",
+      "supersedesDemo": "iq-catedral",
+      "name": "Catedral de Iquitos",
+      "category": "Templo",
+      "description": "La Catedral de San Juan Bautista, o Iglesia Matriz, es el principal templo católico de la ciudad y uno de sus íconos urbanos. De estilo neogótico, se alza en la esquina de los jirones Arica y Putumayo, frente a la Plaza de Armas. Fue declarada Patrimonio Histórico Cultural de la Nación en 1996, cuenta con una cripta y su torre es la más alta entre los templos de Iquitos.",
+      "lat": -3.7493,
+      "lng": -73.245,
+      "locality": "Iquitos",
+      "address": "Jr. Arica con Jr. Putumayo, frente a la Plaza de Armas",
+      "interests": [
+        "arquitectura",
+        "historia",
+        "cultura"
+      ],
+      "typicalVisitMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Catedral de Iquitos",
+          "url": "https://es.wikipedia.org/wiki/Catedral_de_Iquitos"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Catedral de Iquitos (1).jpg",
+        "file": "/images/lugares/iq-catedral.webp",
+        "width": 1280,
+        "height": 1920,
+        "sha256": "16351d93ba3fce0f3b53ebeab5c8762478b1cf9e4d3b33a944f009984215872c",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Catedral de Iquitos (1)",
+          "author": "Mayimbú",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Catedral_de_Iquitos_(1).jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-malecon",
+      "supersedesDemo": "iq-malecon",
+      "name": "Malecón Tarapacá",
+      "category": "Paseo fluvial",
+      "description": "Gran avenida peatonal que bordea el río Itaya y mira hacia el horizonte plano de la selva baja. Es uno de los lugares más concurridos de Iquitos para caminar al atardecer, ver pasar las embarcaciones y comer algo con vista al río. Su tramo sur es el conocido Boulevard.",
+      "lat": -3.7525,
+      "lng": -73.2464,
+      "locality": "Iquitos",
+      "address": "Ribera del río Itaya, centro de Iquitos",
+      "interests": [
+        "relax",
+        "fotografia",
+        "vida-nocturna"
+      ],
+      "typicalVisitMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: Malecón Tarapacá",
+          "url": "https://es.wikipedia.org/wiki/Malec%C3%B3n_Tarapac%C3%A1"
+        },
+        {
+          "label": "OpenStreetMap (Nominatim)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.7534&mlon=-73.2447#map=17/-3.7534/-73.2447"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Malecón Tarapacá.jpg",
+        "file": "/images/lugares/iq-malecon.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "fe420e8b2fbaad0c5aa3c26c069b36e81e051c08aca4b6f496c0a481f24ff635",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Malecón Tarapacá",
+          "author": "Estados Unidos de América del Sur",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Malec%C3%B3n_Tarapac%C3%A1.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-boulevard",
+      "name": "Boulevard de Iquitos",
+      "category": "Vida urbana",
+      "description": "Tramo sur del Malecón Tarapacá, junto al río Itaya, en pleno centro. Es la zona más animada de la ciudad por las noches, con bares, restaurantes, música en vivo y un ambiente de paseo en el que se mezclan visitantes y vecinos. De día es un buen lugar para tomar algo mientras se mira el río.",
+      "lat": -3.7499,
+      "lng": -73.2428,
+      "locality": "Iquitos",
+      "address": "Jr. Napo, centro de Iquitos",
+      "interests": [
+        "vida-nocturna",
+        "gastronomia",
+        "relax"
+      ],
+      "typicalVisitMinutes": 90,
+      "sources": [
+        {
+          "label": "Wikipedia: Boulevard (Malecón Tarapacá)",
+          "url": "https://es.wikipedia.org/wiki/Boulevard_(Malec%C3%B3n_Tarapac%C3%A1)"
+        },
+        {
+          "label": "OpenStreetMap (Nominatim)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.7499&mlon=-73.2428#map=18/-3.7499/-73.2428"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Bulevar de Iquitos.jpg",
+        "file": "/images/lugares/iq-boulevard.webp",
+        "width": 1280,
+        "height": 848,
+        "sha256": "8ac1ad25aa8295792f7de5502712c5890ff83bf7ca9eebff34c047a5a2dacd56",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Bulevar de Iquitos",
+          "author": "Bruno Girin",
+          "license": "CC BY-SA 2.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bulevar_de_Iquitos.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-museo-amazonico",
+      "supersedesDemo": "iq-museo-amazonico",
+      "name": "Museo Amazónico",
+      "category": "Museo",
+      "description": "Museo etnográfico dedicado a las comunidades nativas de la Amazonía, inaugurado el 15 de marzo de 1996. Reúne una colección de treinta estatuas que representan a distintos pueblos indígenas, una galería fotográfica de la época del caucho y una exposición de retratos. Lo administra la Dirección Desconcentrada de Cultura de Loreto, del Ministerio de Cultura.",
+      "lat": -3.7522,
+      "lng": -73.2442,
+      "locality": "Iquitos",
+      "address": "Malecón Tarapacá, centro de Iquitos",
+      "interests": [
+        "museos",
+        "cultura",
+        "historia"
+      ],
+      "typicalVisitMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: Museo Etnográfico Amazónico",
+          "url": "https://es.wikipedia.org/wiki/Museo_Etnogr%C3%A1fico_Amaz%C3%B3nico_(Iquitos)"
+        },
+        {
+          "label": "Wikimedia Commons: Category:Museo Amazónico",
+          "url": "https://commons.wikimedia.org/wiki/Category:Museo_Amaz%C3%B3nico"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Museo Etnografico Amazonico de Iquitos.jpg",
+        "file": "/images/lugares/iq-museo-amazonico.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "9dac6d5f301b326722401f4f8055dc5643068b1b7542c09fe8704f10fd57be2f",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Museo Etnografico Amazonico de Iquitos",
+          "author": "Estados Unidos de América del Sur",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Museo_Etnografico_Amazonico_de_Iquitos.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-ex-hotel-palace",
+      "name": "Ex Hotel Palace",
+      "category": "Patrimonio arquitectónico",
+      "description": "Edificio de tres plantas con torreón en la esquina y decoración de azulejos, de diseño art nouveau con influencias del modernismo catalán. Es uno de los ejemplos más vistosos de la arquitectura que dejó el auge cauchero en el centro histórico de Iquitos; también se le conoce como Casa Vela.",
+      "lat": -3.7507,
+      "lng": -73.2437,
+      "locality": "Iquitos",
+      "address": "Centro histórico de Iquitos",
+      "interests": [
+        "arquitectura",
+        "historia",
+        "fotografia"
+      ],
+      "typicalVisitMinutes": 15,
+      "sources": [
+        {
+          "label": "Wikipedia: Ex Hotel Palace",
+          "url": "https://es.wikipedia.org/wiki/Ex_Hotel_Palace"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Ex Hotel Palace en Iquitos, 2018.jpg",
+        "file": "/images/lugares/iq-ex-hotel-palace.webp",
+        "width": 1280,
+        "height": 1707,
+        "sha256": "638e7c9d797dbccaa8af76c80a5642bbfe14ad559695b8da9eb077f949d5982e",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Ex Hotel Palace en Iquitos, 2018",
+          "author": "Carlos Correa Loyola",
+          "license": "CC BY-SA 2.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ex_Hotel_Palace_en_Iquitos,_2018.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-casa-pinasco",
+      "name": "Casa Pinasco",
+      "category": "Patrimonio arquitectónico",
+      "description": "Casona histórica del centro de Iquitos que perteneció a la familia Pinasco. Hace parte de la ruta a pie por la Zona Monumental, a pocos pasos de la Plaza de Armas, y sirve para imaginar cómo era la ciudad en tiempos del caucho.",
+      "lat": -3.7497,
+      "lng": -73.2439,
+      "locality": "Iquitos",
+      "address": "Centro histórico de Iquitos",
+      "interests": [
+        "arquitectura",
+        "historia"
+      ],
+      "typicalVisitMinutes": 15,
+      "sources": [
+        {
+          "label": "Wikipedia: Casa Pinasco",
+          "url": "https://es.wikipedia.org/wiki/Casa_Pinasco"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Casa Pinasco de Iquitos.jpg",
+        "file": "/images/lugares/iq-casa-pinasco.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "b35babde976375363494d76e18c97d892444af1b62b2a5809ee39aa3484f2852",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Casa Pinasco de Iquitos",
+          "author": "Bettyreategui",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Casa_Pinasco_de_Iquitos.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-belen",
+      "supersedesDemo": "iq-belen",
+      "name": "Mercado de Belén",
+      "category": "Mercado",
+      "description": "El mercado más popular de Iquitos, en el barrio de Belén, junto al río. Sus pasajes reúnen frutas amazónicas, pescado de río, hojas de bijao, ajíes, tabaco y comida callejera. Conviene ir temprano, con calzado cómodo, y cuidar bien las pertenencias: es un sitio muy concurrido y vale más la pena recorrerlo con calma y respeto por el trabajo de quienes venden allí.",
+      "lat": -3.7583,
+      "lng": -73.2481,
+      "locality": "Iquitos",
+      "address": "Barrio de Belén, Iquitos",
+      "interests": [
+        "mercados",
+        "gastronomia",
+        "cultura",
+        "fotografia"
+      ],
+      "typicalVisitMinutes": 90,
+      "sources": [
+        {
+          "label": "Wikimedia Commons: Category:Mercado de Belén",
+          "url": "https://commons.wikimedia.org/wiki/Category:Mercado_de_Bel%C3%A9n"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Mercado de Belén, Iquitos 01.jpg",
+        "file": "/images/lugares/iq-belen.webp",
+        "width": 1280,
+        "height": 964,
+        "sha256": "aea1f4f9107f1e974d4698aa0ae1bed45c3a47c42f22ca7d0bee5d8df2a242ea",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Mercado de Belén, Iquitos 01",
+          "author": "Carlo Brescia",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mercado_de_Bel%C3%A9n,_Iquitos_01.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-quistococha",
+      "supersedesDemo": "iq-quistococha",
+      "name": "Laguna de Quistococha",
+      "category": "Parque turístico",
+      "description": "Complejo turístico de unas 369 hectáreas de bosque amazónico alrededor de una laguna, junto a la carretera Iquitos–Nauta. Tiene una playa artificial de arena blanca (Tunchi Playa), senderos entre palmerales de aguaje, un museo con fauna disecada, un pequeño zoológico y un vivero. Es el plan clásico para pasar medio día de relax, caminata y baño en familia.",
+      "lat": -3.8286,
+      "lng": -73.3205,
+      "locality": "Iquitos",
+      "address": "Carretera Iquitos–Nauta (LO-103), al sur de la ciudad",
+      "interests": [
+        "naturaleza",
+        "relax",
+        "fauna"
+      ],
+      "typicalVisitMinutes": 180,
+      "sources": [
+        {
+          "label": "Wikipedia: Complejo turístico de Quistococha",
+          "url": "https://es.wikipedia.org/wiki/Complejo_tur%C3%ADstico_de_Quistococha"
+        },
+        {
+          "label": "Wikimedia Commons: Category:Quistococha",
+          "url": "https://commons.wikimedia.org/wiki/Category:Quistococha"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Reserva y Zoologico de Quistococha, Iquitos 02.jpg",
+        "file": "/images/lugares/iq-quistococha.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "8ef907b87128182499547b4a3287c34f34c11163f0f98e8ed8d73f896d6d0941",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Reserva y Zoologico de Quistococha, Iquitos 02",
+          "author": "Ibrehaut",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Reserva_y_Zoologico_de_Quistococha,_Iquitos_02.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-rescate-amazonico",
+      "supersedesDemo": "iq-rescate-amazonico",
+      "name": "Centro de Rescate Amazónico",
+      "category": "Fauna",
+      "description": "Centro de rescate y rehabilitación de manatíes amazónicos huérfanos, en el kilómetro 4,5 de la carretera Iquitos–Nauta. Funciona con el Dallas World Aquarium, el Instituto de Investigaciones de la Amazonía Peruana (IIAP) y ACOBIA. Las visitas ayudan a financiar el trabajo y permiten conocer de cerca a estos animales, que luego se liberan en áreas protegidas.",
+      "lat": -3.8182,
+      "lng": -73.321,
+      "locality": "Iquitos",
+      "address": "Km 4,5 de la carretera Iquitos–Nauta",
+      "interests": [
+        "fauna",
+        "naturaleza"
+      ],
+      "typicalVisitMinutes": 90,
+      "sources": [
+        {
+          "label": "Mongabay Latam: Centro de Rescate Amazónico",
+          "url": "https://es.mongabay.com/2018/05/centro-de-rescate-amazonico-manaties-peru/"
+        },
+        {
+          "label": "OTCA: Amazon Rescue Center",
+          "url": "https://otca.org/en/amazon-rescue-center-has-new-spaces-for-manatees/"
+        },
+        {
+          "label": "Atlas Obscura: Amazon Rescue Center",
+          "url": "https://www.atlasobscura.com/places/amazon-rescue-center"
+        },
+        {
+          "label": "OpenStreetMap (Nominatim)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.8182&mlon=-73.3210#map=17/-3.8182/-73.3210"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Manati amazonico en Iquitos.jpg",
+        "file": "/images/lugares/iq-rescate-amazonico.webp",
+        "width": 1280,
+        "height": 853,
+        "sha256": "01564043712eb11a601b86bcfb7bad33c936bc3844b249bb9c96a2014717a02e",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Manati amazonico en Iquitos",
+          "author": "Alan Kotok",
+          "license": "CC BY 2.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Manati_amazonico_en_Iquitos.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-pilpintuwasi",
+      "name": "Mariposario Pilpintuwasi",
+      "category": "Fauna",
+      "description": "Criadero de mariposas y centro de rescate de animales en la zona de Padre Cocha, a orillas del río Nanay, unos veinte minutos al norte de la ciudad. Permite seguir el ciclo completo de la metamorfosis, con decenas de especies amazónicas como el morfo azul. «Pilpintuwasi» significa «casa de mariposas» en quechua.",
+      "lat": -3.7047,
+      "lng": -73.2835,
+      "locality": "Iquitos",
+      "address": "Zona de Padre Cocha, río Nanay",
+      "interests": [
+        "fauna",
+        "naturaleza",
+        "fotografia"
+      ],
+      "typicalVisitMinutes": 120,
+      "sources": [
+        {
+          "label": "Wikipedia: Mariposario Pilpintuwasi",
+          "url": "https://es.wikipedia.org/wiki/Mariposario_Pilpintuwasi"
+        },
+        {
+          "label": "OpenStreetMap (Nominatim)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.7042&mlon=-73.2828#map=16/-3.7042/-73.2828"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Crisálidas del Mariposario Pilpintuwasi.jpg",
+        "file": "/images/lugares/iq-pilpintuwasi.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "a34f7456907c041b9bbc0a789b667fe4e03e57a2493629dde8787c1d3f0b4f53",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Crisálidas del Mariposario Pilpintuwasi",
+          "author": "Taco Witte",
+          "license": "CC BY 2.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cris%C3%A1lidas_del_Mariposario_Pilpintuwasi.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-moronacocha",
+      "name": "Lago Moronacocha",
+      "category": "Naturaleza",
+      "description": "Lago de aguas negras formado por tres cuerpos de agua conectados, al oeste de Iquitos. Su nivel sube entre enero y marzo y baja hacia el final del año, y a sus orillas hay casas sobre pilotes y flotantes. Es un buen lugar para ver cómo la ciudad convive con las crecientes, en paseos en bote o kayak.",
+      "lat": -3.7478,
+      "lng": -73.2889,
+      "locality": "Iquitos",
+      "address": "Oeste de Iquitos",
+      "interests": [
+        "naturaleza",
+        "fotografia",
+        "relax"
+      ],
+      "typicalVisitMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: Lago Moronacocha",
+          "url": "https://es.wikipedia.org/wiki/Lago_Moronacocha"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Casitas del Lago Moronacocha.jpg",
+        "file": "/images/lugares/iq-moronacocha.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "35d99fca38e6615c8d1a9ffa4e6103734d442d3890e8fedee8c5b5a4b3aefce9",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Casitas del Lago Moronacocha",
+          "author": "Puskechina",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Casitas_del_Lago_Moronacocha.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-santa-clara-nanay",
+      "name": "Puerto de Santa Clara (río Nanay)",
+      "category": "Playa de río",
+      "description": "Puerto y playas de arena a orillas del río Nanay, al oeste de Iquitos. El Nanay es uno de los tres ríos que rodean la ciudad y, cuando baja el nivel del agua, sus playas se llenan de familias que van a bañarse. Es una salida sencilla para ver el Amazonas «de a pie» y subir a una lancha local.",
+      "lat": -3.7845,
+      "lng": -73.3397,
+      "locality": "Iquitos",
+      "address": "Santa Clara, río Nanay",
+      "interests": [
+        "naturaleza",
+        "relax",
+        "aventura"
+      ],
+      "typicalVisitMinutes": 150,
+      "sources": [
+        {
+          "label": "Wikipedia: Río Nanay",
+          "url": "https://es.wikipedia.org/wiki/R%C3%ADo_Nanay"
+        },
+        {
+          "label": "OpenStreetMap (Overpass)",
+          "url": "https://www.openstreetmap.org/?mlat=-3.7845&mlon=-73.3397#map=15/-3.7845/-73.3397"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Puerto de Santa Clara en el río Nanay.jpg",
+        "file": "/images/lugares/iq-santa-clara-nanay.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "62401ee94367f50f75e1e94008e788cb8be50e2faef2ba5addd4c56fc6c73908",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Puerto de Santa Clara en el río Nanay",
+          "author": "GabrieldeLoreto",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Puerto_de_Santa_Clara_en_el_r%C3%ADo_Nanay.jpg"
+        }
+      }
+    },
+    {
+      "key": "iq-pacaya-samiria",
+      "name": "Reserva Nacional Pacaya-Samiria",
+      "category": "Excursión de varios días",
+      "description": "La reserva nacional más extensa del Perú, con 2,08 millones de hectáreas de bosque inundable en Loreto, declarada sitio Ramsar en 1986. Se conoce como «el bosque de los espejos» por los reflejos del agua. Las excursiones desde Iquitos suelen salir por Nauta y duran varios días, con guías y operadores autorizados; no es una visita para improvisar.",
+      "lat": -4.5083,
+      "lng": -73.5833,
+      "locality": "Nauta",
+      "address": "Acceso habitual por Nauta, Loreto",
+      "interests": [
+        "naturaleza",
+        "aventura",
+        "fauna"
+      ],
+      "typicalVisitMinutes": 480,
+      "sources": [
+        {
+          "label": "Wikipedia: Reserva nacional Pacaya-Samiria",
+          "url": "https://es.wikipedia.org/wiki/Reserva_nacional_Pacaya-Samiria"
+        }
+      ],
+      "image": {
+        "commonsFile": "File:Reserva Pacaya Samiria-\"La Selva de los Espejos\".jpg",
+        "file": "/images/lugares/iq-pacaya-samiria.webp",
+        "width": 1280,
+        "height": 960,
+        "sha256": "73a419a93cab55191199a63b6e035b77a81facb60dd592973738b8ac8a7bf330",
+        "retrievedOn": "2026-10-23",
+        "credit": {
+          "title": "Reserva Pacaya Samiria-\"La Selva de los Espejos\"",
+          "author": "Yndira Hildaura Tornero Cruzatt",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Reserva_Pacaya_Samiria-%22La_Selva_de_los_Espejos%22.jpg"
+        }
+      }
+    }
+  ]
+}

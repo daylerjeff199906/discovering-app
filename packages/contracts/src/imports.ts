@@ -23,7 +23,7 @@ export const IMPORT_ERROR_CODES = {
  */
 const emptyToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
 export const importOptionsSchema = z.object({
-  /** Título del viaje; si falta se deduce del archivo. */
+  /** Título de la aventura; si falta se deduce del archivo. */
   title: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(120).optional()),
   timezone: z.preprocess(emptyToUndefined, timezoneSchema.optional()),
   /** Importar también los waypoints/lugares como visitas. */

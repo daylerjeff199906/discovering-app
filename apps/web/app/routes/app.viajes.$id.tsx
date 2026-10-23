@@ -23,7 +23,7 @@ import { VisitExtrasView, formatMoney, totalsByCurrency } from "../components/vi
 import type { Route } from "./+types/app.viajes.$id";
 
 export function meta(_: Route.MetaArgs) {
-  return seoMeta({ title: "Resumen del viaje — Por aquí", noindex: true });
+  return seoMeta({ title: "Resumen de la aventura — Por aquí", noindex: true });
 }
 
 /** Resumen propio: el plan (si no empezó) o el diario con el historial de visitas. */
@@ -98,7 +98,7 @@ export default function ResumenViaje() {
   return (
     <div className={diary ? "journey-story-page" : undefined}>
       <PageHeader
-        title={diary ? `Mi historia en ${j.preferences.destinationLabel ?? "mi viaje"}` : j.title}
+        title={diary ? `Mi historia en ${j.preferences.destinationLabel ?? "mi aventura"}` : j.title}
         subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={STATUS_TONE[j.status]}>{STATUS_LABEL[j.status]}</Badge><span>{stops.length} paradas · {vlist.length} visitas · {photos.length} fotos</span></span>}
         actions={
           <>
@@ -132,7 +132,7 @@ export default function ResumenViaje() {
       <div className={diary ? "story-view-content" : "grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}>
         <section hidden={diary && view !== "history"} aria-label={diary ? "Diario" : "Plan"}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-2xl">{diary ? "Diario del viaje" : "Plan"}</h2>
+            <h2 className="text-2xl">{diary ? "Diario de la aventura" : "Plan"}</h2>
             {diary ? <DeleteJourneyButton id={id} title={j.title} diary iconOnly onDeleted={() => navigate("/app/viajes", { replace: true })} /> : null}
           </div>
           {items.length === 0 ? (
@@ -142,8 +142,8 @@ export default function ResumenViaje() {
           )}
         </section>
         <aside hidden={diary && view === "history"} className={diary ? "story-map-view" : "lg:sticky lg:top-24 lg:self-start"} aria-label={view === "track" ? "Trayecto GPS" : "Mapa"}>
-          {!diary || view !== "history" ? <MapPanel key={view} markers={view === "track" && diary ? [] : markers} lines={view === "map" && diary ? [] : lines} selectedId={selected} onSelect={select} fitKey={`${id}:${view}:${markers.length}:${lines.length}`} className="h-[24rem]" ariaLabel={view === "track" ? "Mapa del trayecto GPS" : "Mapa del viaje"} /> : null}
-          {diary && view === "track" && !lines.length ? <p className="mt-4 text-sm text-muted-foreground">No registraste un trayecto GPS en este viaje. Tus visitas y recuerdos siguen guardados en la historia.</p> : null}
+          {!diary || view !== "history" ? <MapPanel key={view} markers={view === "track" && diary ? [] : markers} lines={view === "map" && diary ? [] : lines} selectedId={selected} onSelect={select} fitKey={`${id}:${view}:${markers.length}:${lines.length}`} className="h-[24rem]" ariaLabel={view === "track" ? "Mapa del trayecto GPS" : "Mapa de la aventura"} /> : null}
+          {diary && view === "track" && !lines.length ? <p className="mt-4 text-sm text-muted-foreground">No registraste un trayecto GPS en esta aventura. Tus visitas y recuerdos siguen guardados en la historia.</p> : null}
           {diary && view === "track" ? <ul className="track-segment-list">{track.data?.segments.map((segment, i) => <li key={segment.id}><strong>Tramo {i + 1}</strong><span>{segment.points.length} puntos · {segment.points.reduce((sum, p, n, points) => n ? sum + distanceKm(points[n - 1]!, p) : sum, 0).toFixed(2)} km</span></li>)}</ul> : null}
           {track.isError ? <QueryError error={track.error} retry={() => track.refetch()} /> : null}
           {track.data && track.data.segments.length > 0 ? <p className="mt-2 text-xs text-muted-foreground">{track.data.segments.length} segmento(s) de trayecto registrados. Los huecos entre segmentos no se unen.</p> : null}

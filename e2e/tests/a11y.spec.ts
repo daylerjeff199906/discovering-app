@@ -29,10 +29,10 @@ test("accesibilidad (axe) en el editor, el recorrido, la visita y compartir", as
   await signUpVerifyLogin(page, "a11y");
   await audit(page, "/app/viajes (vacío)");
 
-  await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
+  await page.getByRole("link", { name: "Nueva aventura" }).first().click();
   await audit(page, "/app/viajes/nuevo");
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("button", { name: "Crear viaje" }).click();
+  await page.getByRole("button", { name: "Crear aventura" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
   const dialog = page.getByRole("dialog", { name: "Armar una propuesta" });
@@ -46,7 +46,21 @@ test("accesibilidad (axe) en el editor, el recorrido, la visita y compartir", as
 
   await page.getByRole("button", { name: "Añadir parada" }).first().click();
   await audit(page, "diálogo añadir parada");
-  await page.getByRole("dialog", { name: "Añadir una parada" }).getByRole("button", { name: "Cerrar" }).click();
+  // Acordeón: abrir «Crear lugar nuevo» cierra el buscador, y al volver ocurre lo contrario.
+  const stopDialog = page.getByRole("dialog", { name: "Añadir una parada" });
+  const pick = stopDialog.getByRole("button", { name: /Buscar y elegir un lugar/ });
+  const create = stopDialog.getByRole("button", { name: /Crear lugar nuevo/ });
+  await expect(pick).toHaveAttribute("aria-expanded", "true");
+  await create.click();
+  await expect(create).toHaveAttribute("aria-expanded", "true");
+  await expect(pick).toHaveAttribute("aria-expanded", "false");
+  await expect(stopDialog.getByLabel("Buscar un lugar para añadir")).toHaveCount(0);
+  await expect(stopDialog.getByLabel("Nombre del lugar")).toBeVisible();
+  await audit(page, "diálogo crear lugar");
+  await pick.click();
+  await expect(stopDialog.getByLabel("Buscar un lugar para añadir")).toBeVisible();
+  await expect(stopDialog.getByLabel("Nombre del lugar")).toHaveCount(0);
+  await stopDialog.getByRole("button", { name: "Cerrar" }).click();
 
   await page.getByRole("button", { name: "Iniciar recorrido" }).click();
   await page.waitForURL(/\/recorrido/);

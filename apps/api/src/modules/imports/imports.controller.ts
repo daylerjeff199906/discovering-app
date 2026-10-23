@@ -56,7 +56,7 @@ export class ImportsController {
   @UseInterceptors(FileInterceptor("file"))
   @ApiConsumes("multipart/form-data")
   @ApiBody({ schema: multipartSpec as never })
-  @Api({ summary: "Importar un recorrido: crea un viaje libre finalizado con trayecto GPS y visitas", status: 201 })
+  @Api({ summary: "Importar un recorrido: crea una aventura libre finalizada con trayecto GPS y visitas", status: 201 })
   import(@CurrentUser() user: AuthUser, @UploadedFile() file: UploadedBuffer | undefined, @Body() body: unknown): Promise<ImportResult> {
     const { buffer, name, options } = readUpload(file, body);
     return this.imports.import(user, buffer, options, name);

@@ -13,7 +13,7 @@ export function StartAdventure({ journeyId, hasStops, defaultFree, pending, erro
   const [mode, setMode] = useState<AdventureMode>(defaultFree || !hasStops ? "FREE" : "FOLLOW_ROUTE");
   const [gps, setGps] = useState(false);
   return <section className="start-adventure">
-    <Link to={`/app/viajes/${journeyId}/editar`} className="adventure-back"><ArrowLeft size={18} aria-hidden="true" /> Volver a mi viaje</Link>
+    <Link to={`/app/viajes/${journeyId}/editar`} className="adventure-back"><ArrowLeft size={18} aria-hidden="true" /> Volver a mi aventura</Link>
     <p className="eyebrow mb-2">Iquitos, a tu manera</p>
     <h1>Comenzar aventura</h1>
     <p className="adventure-intro">Tu ruta está lista. ¿Cómo quieres explorar?</p>

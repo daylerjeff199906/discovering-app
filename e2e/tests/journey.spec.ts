@@ -7,12 +7,12 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   const author = await signUpVerifyLogin(page, "autor");
 
   /* ── Crear ruta manual y añadir paradas ── */
-  await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
+  await page.getByRole("link", { name: "Nueva aventura" }).first().click();
   await page.getByText("Armar manualmente").click();
-  await page.getByLabel("Nombre de tu viaje").fill("Mi día en Iquitos (e2e)");
-  await page.getByRole("button", { name: "Crear viaje" }).click();
+  await page.getByLabel("Nombre de tu aventura").fill("Mi día en Iquitos (e2e)");
+  await page.getByRole("button", { name: "Crear aventura" }).click();
   await page.waitForURL(/\/editar/);
-  await expect(page.getByLabel("Título del viaje")).toHaveValue("Mi día en Iquitos (e2e)");
+  await expect(page.getByLabel("Título de la aventura")).toHaveValue("Mi día en Iquitos (e2e)");
 
   for (const name of ["Plaza de Armas de Iquitos", "Casa de Fierro", "Malecón Tarapacá"]) {
     await page.getByRole("button", { name: "Añadir parada" }).first().click();
@@ -31,7 +31,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await page.getByRole("button", { name: "Subir Malecón Tarapacá" }).click();
   await expect.poll(stopTitles).toEqual(["Plaza de Armas de Iquitos", "Malecón Tarapacá", "Casa de Fierro"]);
   await page.reload();
-  await expect(page.getByLabel("Título del viaje")).toHaveValue("Mi día en Iquitos (e2e)");
+  await expect(page.getByLabel("Título de la aventura")).toHaveValue("Mi día en Iquitos (e2e)");
   await expect.poll(stopTitles).toEqual(["Plaza de Armas de Iquitos", "Malecón Tarapacá", "Casa de Fierro"]);
 
   // Sin proveedor de rutas: los traslados quedan «Por definir» (nunca inventados)
@@ -60,7 +60,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await expect(page.getByText("Lista ✓")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("button", { name: "Ver foto 1", exact: true })).toBeVisible();
 
-  await page.getByRole("link", { name: "Volver al viaje" }).click();
+  await page.getByRole("link", { name: "Volver a la aventura" }).click();
   /* Diario: foto como polaroid + gasto y recomendación visibles solo para su autor */
   await expect(page.locator(".polaroid-stack").first()).toBeVisible();
   await expect(page.getByText(/23[.,]50/).first()).toBeVisible();
@@ -69,7 +69,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await expect(page.getByRole("heading", { name: "Próximas paradas" })).toBeVisible();
   await page.getByRole("button", { name: "Estoy aquí" }).first().click();
   await expect(page.getByText(/Marcaste que estás en/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Diario del viaje" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diario de la aventura" })).toBeVisible();
   await page.goto(page.url().replace(/\/app\/viajes\/([^/?]+).*/, "/app/viajes/$1/recorrido"));
   await page.getByRole("button", { name: "Finalizar", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Finalizar recorrido" })).toBeVisible();
@@ -138,9 +138,9 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
 
 test("ruta automática: propuesta explicable, aplicación y persistencia", async ({ page }) => {
   await signUpVerifyLogin(page, "auto");
-  await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
+  await page.getByRole("link", { name: "Nueva aventura" }).first().click();
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("button", { name: "Crear viaje" }).click();
+  await page.getByRole("button", { name: "Crear aventura" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
   const dialog = page.getByRole("dialog", { name: "Armar una propuesta" });

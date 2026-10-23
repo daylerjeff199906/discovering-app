@@ -36,7 +36,7 @@ describe("reordenamiento", () => {
     expect(l.map((d) => d.stopIds)).toEqual([["a", "c"], ["b", "d"]]);
     expect(l.flatMap((d) => d.stopIds).sort()).toEqual(["a", "b", "c", "d"]);
   });
-  it("subir/bajar cruza al día vecino en los extremos y devuelve null en los límites del viaje", () => {
+  it("subir/bajar cruza al día vecino en los extremos y devuelve null en los límites de la aventura", () => {
     const l = layoutOf(journey());
     expect(shiftStop(l, "b", -1)![0]!.stopIds).toEqual(["b", "a", "c"]);
     expect(shiftStop(l, "c", 1)!.map((d) => d.stopIds)).toEqual([["a", "b"], ["c", "d"]]);

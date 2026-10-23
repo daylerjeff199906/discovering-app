@@ -18,7 +18,7 @@ export class CatalogController {
     const tags = await this.placeService.interestsFor(rows.map((p) => p.id));
     const defaults = travelCatalogSchema.parse({
       revision: 0,
-      banner: { title: "¿Dónde empieza tu próxima historia?", subtitle: "Destinos reales. Experiencias memorables.", planLabel: "Planear un viaje", recordLabel: "Registrar mi aventura" },
+      banner: { title: "¿Dónde empieza tu próxima historia?", subtitle: "Destinos reales. Experiencias memorables.", planLabel: "Planear una aventura", recordLabel: "Registrar mi aventura" },
       cities: [{ id: "iquitos", name: "Iquitos", region: "Loreto", country: "Perú", description: "Calles llenas de historia, paseos junto al río y naturaleza amazónica. Descubre Iquitos y guarda tu propia historia.", imageUrl: "/images/iquitos-malecon.jpg", lat: -3.7491, lng: -73.2538, enabled: true, highlights: ["Amazonía peruana", "Cultura viva", "Paseos junto al río"] }],
       places: rows.filter((p) => p.locality === "Iquitos").map((p) => ({ id: p.id, cityId: "iquitos", name: p.name, description: p.description ?? "", category: "Lugar de interés", imageUrl: /bel[eé]n/i.test(p.name) ? "/images/iquitos-belen.jpg" : /malec|laguna|rescate/i.test(p.name) ? "/images/iquitos-malecon.jpg" : "/images/iquitos-plaza.jpg", lat: p.location.lat, lng: p.location.lng, enabled: true, interests: tags.get(p.id) ?? [] })),
     });

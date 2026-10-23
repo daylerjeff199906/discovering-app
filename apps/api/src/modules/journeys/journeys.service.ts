@@ -36,16 +36,16 @@ export class JourneysService {
     private readonly media: MediaService,
   ) {}
 
-  /** El viaje debe existir y ser del usuario; si no, 404 (no se revela la existencia de recursos ajenos). */
+  /** La aventura debe existir y ser del usuario; si no, 404 (no se revela la existencia de recursos ajenos). */
   async assertOwned(exec: DbExecutor, userId: string, journeyId: string): Promise<JourneyRow> {
     const [row] = await exec.select().from(journeys).where(and(eq(journeys.id, journeyId), eq(journeys.ownerId, userId))).limit(1);
-    if (!row) throw notFound("No encontramos ese viaje.");
+    if (!row) throw notFound("No encontramos esa aventura.");
     return row;
   }
 
   /**
    * Control optimista de concurrencia. El UPDATE condicionado por versión también toma el bloqueo de fila:
-   * las ediciones concurrentes del mismo viaje se serializan y la perdedora recibe 409.
+   * las ediciones concurrentes de la misma aventura se serializan y la perdedora recibe 409.
    */
   async bump(tx: DbExecutor, userId: string, journeyId: string, expectedVersion: number): Promise<number> {
     const updated = await tx
@@ -55,7 +55,7 @@ export class JourneysService {
       .returning({ version: journeys.version });
     if (updated[0]) return updated[0].version;
     const row = await this.assertOwned(tx, userId, journeyId);
-    if (row.archivedAt) throw badRequest("JOURNEY_ARCHIVED", "Este viaje está archivado. Desarchívalo para editarlo.");
+    if (row.archivedAt) throw badRequest("JOURNEY_ARCHIVED", "Esta aventura está archivada. Desarchívala para editarla.");
     throw versionConflict(row.version);
   }
 
@@ -97,7 +97,7 @@ export class JourneysService {
     return loadJourneyDto(this.db, id, user.id);
   }
 
-  /* ───────────── Escritura del viaje ───────────── */
+  /* ───────────── Escritura de la aventura ───────────── */
 
   async create(user: AuthUser, input: CreateJourneyInput): Promise<JourneyDto> {
     const [profile] = await this.db.select({ tz: profiles.timezone }).from(profiles).where(eq(profiles.userId, user.id));
@@ -149,7 +149,7 @@ export class JourneysService {
   async delete(user: AuthUser, id: string): Promise<{ ok: true }> {
     await this.db.transaction(async (tx) => {
       const [owned] = await tx.select().from(journeys).where(and(eq(journeys.id, id), eq(journeys.ownerId, user.id))).for("update");
-      if (!owned) throw notFound("No encontramos ese viaje.");
+      if (!owned) throw notFound("No encontramos esa aventura.");
       // Bloquea nuevas reservas de fotos mientras se reúnen los archivos a retirar.
       await tx.select({ id: visits.id }).from(visits).where(eq(visits.journeyId, id)).for("update");
       const assets = await tx.select({ id: visitMedia.assetId }).from(visitMedia)
@@ -301,10 +301,10 @@ export class JourneysService {
       const seenDays = new Set<string>();
       const seenStops = new Set<string>();
       for (const entry of input.layout) {
-        if (!dayIds.has(entry.dayId) || seenDays.has(entry.dayId)) throw badRequest("REORDER_INVALID", "El orden incluye días repetidos o ajenos al viaje.");
+        if (!dayIds.has(entry.dayId) || seenDays.has(entry.dayId)) throw badRequest("REORDER_INVALID", "El orden incluye días repetidos o ajenos a la aventura.");
         seenDays.add(entry.dayId);
         for (const sid of entry.stopIds) {
-          if (!stopIds.has(sid) || seenStops.has(sid)) throw badRequest("REORDER_INVALID", "El orden incluye paradas repetidas o ajenas al viaje.");
+          if (!stopIds.has(sid) || seenStops.has(sid)) throw badRequest("REORDER_INVALID", "El orden incluye paradas repetidas o ajenas a la aventura.");
           seenStops.add(sid);
         }
       }
@@ -351,7 +351,7 @@ export class JourneysService {
 
   /**
    * Recalcula los tramos consecutivos de cada día con el proveedor configurado. Se hace fuera de la transacción
-   * (puede tardar) y solo se aplica si el viaje no cambió mientras tanto: nunca sobrescribe ediciones.
+   * (puede tardar) y solo se aplica si la aventura no cambió mientras tanto: nunca sobrescribe ediciones.
    */
   async recalculateLegs(user: AuthUser, id: string): Promise<{ applied: boolean; reason: "OK" | "NO_PROVIDER" | "MODE_UNSUPPORTED" | "STALE"; computed: number; journey: JourneyDto }> {
     const before = await this.get(user, id);

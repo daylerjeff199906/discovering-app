@@ -22,7 +22,7 @@ import { Badge } from "@por-aqui/ui";
 import type { Route } from "./+types/app.viajes.$id.editar";
 
 export function meta(_: Route.MetaArgs) {
-  return seoMeta({ title: "Editar viaje — Por aquí", noindex: true });
+  return seoMeta({ title: "Editar aventura — Por aquí", noindex: true });
 }
 
 function DragHandle({ id, label }: { id: string; label: string }) {
@@ -97,7 +97,7 @@ export default function EditarViaje() {
   const flush = useCallback(() => {
     if (!draft || !dirty.current) return;
     dirty.current = false;
-    update.mutate({ title: draft.title.trim() || "Mi viaje", preferences: draft.prefs }, { onSuccess: () => scheduleRecalc() });
+    update.mutate({ title: draft.title.trim() || "Mi aventura", preferences: draft.prefs }, { onSuccess: () => scheduleRecalc() });
   }, [draft, update, scheduleRecalc]);
   useEffect(() => {
     if (!dirty.current) return;
@@ -153,7 +153,7 @@ export default function EditarViaje() {
   const markers: MapMarker[] = flat.map((s) => ({ id: s.id, lng: s.place.lng, lat: s.place.lat, index: s.index, state: states.get(s.id) ?? "pending", label: `${s.index}. ${s.place.name}` }));
   const sum = j ? summarize(j) : null;
 
-  if (journey.isPending) return <LoadingBlock label="Cargando tu viaje…" />;
+  if (journey.isPending) return <LoadingBlock label="Cargando tu aventura…" />;
   if (journey.isError || !j || !draft) return <QueryError error={journey.error} retry={() => journey.refetch()} />;
   const locked = j.status === "ARCHIVED";
   const copied = search.get("copiado");
@@ -162,7 +162,7 @@ export default function EditarViaje() {
     <>
       <PageHeader
         title={
-          <input aria-label="Título del viaje" value={draft.title} maxLength={120} disabled={locked} onChange={(e) => edit({ title: e.target.value })} onBlur={flush} className="w-full max-w-2xl rounded-control border border-transparent bg-transparent px-1 font-serif text-3xl hover:border-control-border focus:border-control-border md:text-4xl" />
+          <input aria-label="Título de la aventura" value={draft.title} maxLength={120} disabled={locked} onChange={(e) => edit({ title: e.target.value })} onBlur={flush} className="w-full max-w-2xl rounded-control border border-transparent bg-transparent px-1 font-serif text-3xl hover:border-control-border focus:border-control-border md:text-4xl" />
         }
         subtitle={<span className="flex flex-wrap items-center gap-3"><Badge tone={STATUS_TONE[j.status]}>{STATUS_LABEL[j.status]}</Badge><SaveIndicator /></span>}
         actions={
@@ -176,13 +176,13 @@ export default function EditarViaje() {
 
       {copied ? <Alert tone="success" className="mb-4" title="Copiamos las paradas a tu borrador">{`${copied} paradas copiadas. No se copian fotos, notas ni trayectos de la otra persona.${Number(search.get("omitidas")) > 0 ? ` ${search.get("omitidas")} parada(s) no se copiaron porque su autor ocultó la ubicación.` : ""}`}</Alert> : null}
       {conflict ? (
-        <Alert tone="warning" live="assertive" className="mb-4" title="Este viaje cambió en otra pestaña o dispositivo">
+        <Alert tone="warning" live="assertive" className="mb-4" title="Esta aventura cambió en otra pestaña o dispositivo">
           Cargamos la versión más reciente. Revisa los cambios y vuelve a aplicar lo que necesites.
           <button type="button" className="ml-3 font-semibold underline" onClick={() => { setConflict(false); setDraft(null); dirty.current = false; }}>Entendido</button>
         </Alert>
       ) : null}
-      {locked ? <Alert tone="neutral" className="mb-4">Este viaje está archivado. Desarchívalo desde «Mis viajes» para editarlo.</Alert> : null}
-      {j.recording ? <Alert tone="sage" className="mb-4">Este viaje ya tiene un recorrido ({j.recording.status === "COMPLETED" ? "finalizado" : "en curso"}). Si cambias el plan, tus visitas registradas se conservan.</Alert> : null}
+      {locked ? <Alert tone="neutral" className="mb-4">Esta aventura está archivada. Desarchívala desde «Mis aventuras» para editarla.</Alert> : null}
+      {j.recording ? <Alert tone="sage" className="mb-4">Esta aventura ya tiene un recorrido ({j.recording.status === "COMPLETED" ? "finalizado" : "en curso"}). Si cambias el plan, tus visitas registradas se conservan.</Alert> : null}
 
       <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-4">
@@ -190,10 +190,10 @@ export default function EditarViaje() {
           <Button variant="secondary" disabled={locked} onClick={() => setProposalOpen(true)}><Wand2 className="size-5" aria-hidden="true" /> Armar propuesta automática</Button>
         </div>
 
-        <section aria-label="Plan del viaje" className="min-w-0">
+        <section aria-label="Plan de la aventura" className="min-w-0">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <div className="flex flex-col gap-8">
-              {j.days.length === 0 ? <EmptyState title="Aún no hay días" action={<Button onClick={() => addDay.mutate()}>Añadir el primer día</Button>}>Un viaje libre empieza vacío. Añade un día para planear paradas, o inicia el recorrido y registra lo que visites.</EmptyState> : null}
+              {j.days.length === 0 ? <EmptyState title="Aún no hay días" action={<Button onClick={() => addDay.mutate()}>Añadir el primer día</Button>}>Una aventura libre empieza vacía. Añade un día para planear paradas, o inicia el recorrido y registra lo que visites.</EmptyState> : null}
               {j.days.map((day, di) => {
                 const items: TrailItem[] = day.stops.map((s, i) => ({
                   id: s.id,

@@ -29,26 +29,26 @@ export class JourneysController {
   constructor(private readonly journeys: JourneysService) {}
 
   @Get()
-  @Api({ summary: "Mis viajes", query: journeyListQuerySchema })
+  @Api({ summary: "Mis aventuras", query: journeyListQuerySchema })
   list(@CurrentUser() user: AuthUser, @ParsedQuery() q: z.infer<typeof journeyListQuerySchema>) {
     return this.journeys.list(user, { status: q.status, includeArchived: q.includeArchived === "true" });
   }
 
   @Post()
   @HttpCode(201)
-  @Api({ summary: "Crear viaje (automático, manual o libre)", body: createJourneyInputSchema, status: 201 })
+  @Api({ summary: "Crear aventura (automático, manual o libre)", body: createJourneyInputSchema, status: 201 })
   create(@CurrentUser() user: AuthUser, @Body() body: CreateJourneyInput) {
     return this.journeys.create(user, body);
   }
 
   @Get(":id")
-  @Api({ summary: "Detalle del viaje con días, paradas, tramos y ejecución" })
+  @Api({ summary: "Detalle de la aventura con días, paradas, tramos y ejecución" })
   get(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string) {
     return this.journeys.get(user, id);
   }
 
   @Delete(":id")
-  @Api({ summary: "Eliminar mi viaje y sus recuerdos y publicación" })
+  @Api({ summary: "Eliminar mi aventura y sus recuerdos y publicación" })
   delete(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string) {
     return this.journeys.delete(user, id);
   }
@@ -133,7 +133,7 @@ export class JourneysController {
 
   @Post(":id/legs/recalculate")
   @HttpCode(200)
-  @Api({ summary: "Recalcular tramos con el proveedor de rutas (no sobrescribe si el viaje cambió)" })
+  @Api({ summary: "Recalcular tramos con el proveedor de rutas (no sobrescribe si la aventura cambió)" })
   recalc(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string) {
     return this.journeys.recalculateLegs(user, id);
   }

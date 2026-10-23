@@ -33,7 +33,7 @@ export default function LayoutAuth() {
           </h2>
           <p>
             Descubre lugares, haz tu propio camino y guarda esos pequeños
-            momentos que hacen grande un viaje.
+            momentos que hacen grande una aventura.
           </p>
         </div>
         <div className="auth-story-bottom">

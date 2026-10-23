@@ -22,7 +22,7 @@ export class RecordingsController {
   constructor(private readonly recordings: RecordingsService) {}
 
   @Get("journeys/:id/recording")
-  @Api({ summary: "Ejecución del viaje: { recording } (null si no se inició)" })
+  @Api({ summary: "Ejecución de la aventura: { recording } (null si no se inició)" })
   async get(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string) {
     return { recording: await this.recordings.get(user, id) };
   }
@@ -56,7 +56,7 @@ export class RecordingsController {
   }
 
   @Get("journeys/:id/visits")
-  @Api({ summary: "Visitas del viaje en orden cronológico" })
+  @Api({ summary: "Visitas de la aventura en orden cronológico" })
   journeyVisits(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string) {
     return this.recordings.listJourneyVisits(user, id);
   }

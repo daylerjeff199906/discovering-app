@@ -38,7 +38,7 @@ export class RecordingsService {
 
   private async ownedJourney(exec: DbExecutor, userId: string, journeyId: string) {
     const [j] = await exec.select().from(journeys).where(and(eq(journeys.id, journeyId), eq(journeys.ownerId, userId))).limit(1);
-    if (!j) throw notFound("No encontramos ese viaje.");
+    if (!j) throw notFound("No encontramos esa aventura.");
     return j;
   }
 
@@ -64,10 +64,10 @@ export class RecordingsService {
 
   async start(user: AuthUser, journeyId: string): Promise<RecordingDto> {
     const journey = await this.ownedJourney(this.db, user.id, journeyId);
-    if (journey.archivedAt) throw badRequest("JOURNEY_ARCHIVED", "Este viaje está archivado.");
+    if (journey.archivedAt) throw badRequest("JOURNEY_ARCHIVED", "Esta aventura está archivada.");
     const [existing] = await this.db.select().from(recordings).where(eq(recordings.journeyId, journeyId));
     if (existing) {
-      if (existing.status === "COMPLETED") throw new AppError(409, ERROR_CODES.RECORDING_CLOSED, "Este recorrido ya fue finalizado. Duplica el viaje para repetirlo.");
+      if (existing.status === "COMPLETED") throw new AppError(409, ERROR_CODES.RECORDING_CLOSED, "Este recorrido ya fue finalizado. Duplica la aventura para repetirlo.");
       return recordingToDto(existing); // idempotente
     }
     const [rec] = await this.db
@@ -107,7 +107,7 @@ export class RecordingsService {
     await this.ownedJourney(this.db, user.id, journeyId);
     return this.db.transaction(async (tx) => {
       const [rec] = await tx.select().from(recordings).where(eq(recordings.journeyId, journeyId)).for("update");
-      if (!rec) throw notFound("Este viaje todavía no se inició.");
+      if (!rec) throw notFound("Esta aventura todavía no se inició.");
       if (rec.status === "COMPLETED") throw new AppError(409, ERROR_CODES.RECORDING_CLOSED, "Este recorrido ya fue finalizado.");
       return recordingToDto(await fn(tx, rec));
     });
@@ -121,7 +121,7 @@ export class RecordingsService {
     await this.ownedJourney(this.db, user.id, journeyId);
     return this.db.transaction(async (tx) => {
       const [rec] = await tx.select().from(recordings).where(eq(recordings.journeyId, journeyId)).for("update");
-      if (!rec) throw notFound("Este viaje todavía no se inició.");
+      if (!rec) throw notFound("Esta aventura todavía no se inició.");
       if (rec.status === "COMPLETED") return recordingToDto(rec);
 
       const server = await this.segmentWatermarks(tx, rec.id);
@@ -180,7 +180,7 @@ export class RecordingsService {
 
   async createVisit(user: AuthUser, recordingId: string, input: CreateVisitInput): Promise<{ visit: VisitDto; created: boolean }> {
     const { rec, journey } = await this.ownedRecording(this.db, user.id, recordingId);
-    if (journey.archivedAt) throw badRequest("JOURNEY_ARCHIVED", "Este viaje está archivado.");
+    if (journey.archivedAt) throw badRequest("JOURNEY_ARCHIVED", "Esta aventura está archivada.");
     if (rec.status === "COMPLETED" && !input.retroactive) {
       throw new AppError(409, ERROR_CODES.RECORDING_CLOSED, "El recorrido ya terminó. Para añadir una visita pasada, confírmalo explícitamente.");
     }
@@ -199,7 +199,7 @@ export class RecordingsService {
 
         if (input.stopId) {
           const ok = await tx.execute(sql`select 1 from journey_stops where id = ${input.stopId} and journey_id = ${journey.id}`);
-          if (ok.rows.length === 0) throw badRequest("STOP_INVALID", "Esa parada no pertenece a este viaje.", { stopId: ["Parada inválida"] });
+          if (ok.rows.length === 0) throw badRequest("STOP_INVALID", "Esa parada no pertenece a esta aventura.", { stopId: ["Parada inválida"] });
         }
         const [v] = await tx
           .insert(visits)

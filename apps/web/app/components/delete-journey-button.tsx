@@ -26,9 +26,9 @@ export function DeleteJourneyButton({ id, title, onDeleted, size = "sm", diary =
     },
   });
   return <>
-    <Button size={iconOnly ? "icon" : size} variant="ghost" className="text-danger" aria-label={`${diary ? "Eliminar diario" : "Eliminar viaje"}: ${title}`} title={diary ? "Eliminar diario" : "Eliminar viaje"} onClick={() => { remove.reset(); setOpen(true); }}><Trash2 className="size-4" aria-hidden="true" /> {!iconOnly ? diary ? "Eliminar diario" : "Eliminar viaje" : null}</Button>
-    <Dialog open={open} onClose={() => { if (!remove.isPending) setOpen(false); }} title={diary ? "¿Eliminar este diario y su viaje?" : "¿Eliminar este viaje?"} description={title}
-      footer={<><Button variant="outline" disabled={remove.isPending} onClick={() => setOpen(false)}>Conservar viaje</Button><Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate()}>Eliminar definitivamente</Button></>}>
+    <Button size={iconOnly ? "icon" : size} variant="ghost" className="text-danger" aria-label={`${diary ? "Eliminar diario" : "Eliminar aventura"}: ${title}`} title={diary ? "Eliminar diario" : "Eliminar aventura"} onClick={() => { remove.reset(); setOpen(true); }}><Trash2 className="size-4" aria-hidden="true" /> {!iconOnly ? diary ? "Eliminar diario" : "Eliminar aventura" : null}</Button>
+    <Dialog open={open} onClose={() => { if (!remove.isPending) setOpen(false); }} title={diary ? "¿Eliminar este diario y su aventura?" : "¿Eliminar esta aventura?"} description={title}
+      footer={<><Button variant="outline" disabled={remove.isPending} onClick={() => setOpen(false)}>Conservar aventura</Button><Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate()}>Eliminar definitivamente</Button></>}>
       <p>Se eliminarán sus paradas, visitas, fotos y trayecto GPS. Si lo compartiste, su publicación también dejará de estar disponible. Esta acción no se puede deshacer.</p>
       {remove.isError ? <Alert tone="danger" live="assertive" className="mt-4">{errorMessage(remove.error)}</Alert> : null}
     </Dialog>

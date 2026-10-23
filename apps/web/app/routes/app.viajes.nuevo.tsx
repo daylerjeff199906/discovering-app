@@ -11,7 +11,7 @@ import { seoMeta } from "../lib/seo";
 import type { Route } from "./+types/app.viajes.nuevo";
 
 export function meta(_: Route.MetaArgs) {
-  return seoMeta({ title: "Nuevo viaje — Por aquí", noindex: true });
+  return seoMeta({ title: "Nueva aventura — Por aquí", noindex: true });
 }
 
 type Mode = "auto" | "manual" | "libre";
@@ -33,7 +33,7 @@ export default function NuevoViaje() {
   const [title, setTitle] = useState(params.get("titulo") ?? "");
   const create = useMutation({
     mutationFn: () => api.journeys.create({
-      title: title.trim() || (selectedCity ? `Viaje a ${selectedCity.name}` : "Mi aventura"),
+      title: title.trim() || (selectedCity ? `Aventura en ${selectedCity.name}` : "Mi aventura"),
       creationMode: mode === "auto" ? "AUTOMATIC" : mode === "manual" ? "MANUAL" : "FREE",
       timezone: browserTimezone(),
       preferences: { interests: [], pace: "MODERATE", transport: "WALK", ...(selectedCity ? { destinationLabel: selectedCity.name } : {}) },
@@ -48,7 +48,7 @@ export default function NuevoViaje() {
     <p className="adventure-intro">Un nuevo camino te espera. ¿Cómo quieres empezar?</p>
     <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
       <fieldset disabled={create.isPending}>
-        <legend className="sr-only">Cómo empezar tu viaje</legend>
+        <legend className="sr-only">Cómo empezar tu aventura</legend>
         <div className="adventure-options new-journey-options">
           {(catalog.data?.modes ?? OPTIONS).map((option) => <label key={option.id} className={cn("adventure-option", mode === option.id && "selected")}>
             <input type="radio" name="modo" value={option.id} checked={mode === option.id} onChange={() => setMode(option.id)} />
@@ -58,7 +58,7 @@ export default function NuevoViaje() {
         </div>
       </fieldset>
       <div className="new-journey-details">
-        <Field label="Nombre de tu viaje" hint="Opcional. También puedes cambiarlo después.">
+        <Field label="Nombre de tu aventura" hint="Opcional. También puedes cambiarlo después.">
           {(c) => <Input {...c} value={title} maxLength={120} disabled={create.isPending} onChange={(e) => setTitle(e.target.value)} placeholder="Un día para descubrir Iquitos" />}
         </Field>
         <Field label="Ciudad" hint="Elige una ciudad del catálogo.">
@@ -67,7 +67,7 @@ export default function NuevoViaje() {
       </div>
       {mode === "libre" ? <p className="adventure-note">En el siguiente paso podrás elegir si quieres registrar tu trayecto con GPS. También puedes añadir visitas manualmente.</p> : null}
       {create.isError ? <Alert tone="danger" live="assertive" className="mb-4">{errorMessage(create.error)}</Alert> : null}
-      <Button type="submit" className="w-full" disabled={!selectedCity} loading={create.isPending}>{mode === "libre" ? "Continuar mi aventura" : "Crear viaje"}<ArrowRight size={18} aria-hidden="true" /></Button>
+      <Button type="submit" className="w-full" disabled={!selectedCity} loading={create.isPending}>{mode === "libre" ? "Continuar mi aventura" : "Crear aventura"}<ArrowRight size={18} aria-hidden="true" /></Button>
     </form>
     <p className="adventure-note import-link"><FileUp size={18} aria-hidden="true" /><span>¿Ya hiciste el recorrido? <Link to="/app/viajes/importar" className="underline">Importar un recorrido</Link> desde un archivo GPX, KML o de Google Takeout.</span></p>
     <DestinationPicker open={pickerOpen} onClose={() => setPickerOpen(false)} selected={selectedCity?.id} onSelect={(c) => setDestination(c.name)} />
