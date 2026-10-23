@@ -65,6 +65,11 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await expect(page.locator(".polaroid-stack").first()).toBeVisible();
   await expect(page.getByText(/23[.,]50/).first()).toBeVisible();
   await expect(page.getByText("Ve temprano, hay menos gente").first()).toBeVisible();
+  /* Ruta planeada: las paradas pendientes se pueden marcar con «Estoy aquí» desde el resumen */
+  await expect(page.getByRole("heading", { name: "Próximas paradas" })).toBeVisible();
+  await page.getByRole("button", { name: "Estoy aquí" }).first().click();
+  await expect(page.getByText(/Marcaste que estás en/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diario del viaje" })).toBeVisible();
   await page.goto(page.url().replace(/\/app\/viajes\/([^/?]+).*/, "/app/viajes/$1/recorrido"));
   await page.getByRole("button", { name: "Finalizar", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Finalizar recorrido" })).toBeVisible();
@@ -91,7 +96,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await anon.getByRole("link", { name: "Mi día en Iquitos (e2e)" }).first().click();
   await expect(anon.getByRole("heading", { level: 1, name: "Mi día en Iquitos (e2e)" })).toBeVisible();
   const trail = anon.getByRole("list", { name: /Paradas de/ });
-  await expect(trail.locator("> li")).toHaveCount(1); // solo la visita confirmada (1 de 3 paradas)
+  await expect(trail.locator("> li")).toHaveCount(2); // solo las visitas confirmadas (2 de 3 paradas)
   await expect(anon.getByText("Ve temprano, hay menos gente")).toHaveCount(0); // la recomendación solo se publica si el autor lo elige
   await expect(anon.getByText(/23[.,]50/)).toHaveCount(0); // el gasto nunca se publica
   await expect(anon.getByText("Nota privada de la plaza")).toHaveCount(0); // las notas no se publican salvo que el autor las elija
@@ -122,7 +127,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   /* ── El autor retira la publicación: el acceso se corta ── */
   await page.getByRole("button", { name: "Retirar (volver a privado)" }).click();
   await expect(page.getByText("Privado", { exact: true }).first()).toBeVisible();
-  expect((await anonCtx.request.get(slugHref!)).status()).toBe(410);
+  await expect.poll(async () => (await anonCtx.request.get(slugHref!)).status()).toBe(410);
   await reader.goto("/app/guardados");
   await reader.getByRole("tab", { name: "Historias" }).click();
   await expect(reader.getByText("Historia no disponible")).toBeVisible();

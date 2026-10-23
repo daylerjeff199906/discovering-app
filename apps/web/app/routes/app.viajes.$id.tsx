@@ -1,6 +1,6 @@
 import { Alert, Badge, Button, EmptyState, JourneyTrail, Lightbox, Tabs, buttonClass, type TrailItem } from "@por-aqui/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, Copy, MapPinPlus, Pencil, Share2, BookOpen, Map as MapIcon, Route as RouteIcon } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, CheckCircle2, Copy, MapPinPlus, Pencil, Share2, BookOpen, Map as MapIcon, Route as RouteIcon } from "lucide-react";
 import { AmazonArt } from "../components/travel-art";
 import { ShareStorySheet } from "../components/share-story-sheet";
 import { distanceKm } from "../lib/catalog";
@@ -11,9 +11,11 @@ import { DeleteJourneyButton } from "../components/delete-journey-button";
 import { DeleteVisitButton } from "../components/delete-visit-button";
 import { LoadingBlock, PageHeader, QueryError } from "../components/shell";
 import { api } from "../lib/api";
-import { formatDateTime, STATUS_LABEL, STATUS_TONE } from "../lib/format";
+import { useMe } from "../lib/auth";
+import { browserTimezone, formatDateTime, STATUS_LABEL, STATUS_TONE, uuid } from "../lib/format";
+import { submitVisit } from "../lib/recording-sync";
 import { useJourney } from "../lib/journey-hooks";
-import { visitsQuery } from "../lib/query";
+import { qk, visitsQuery } from "../lib/query";
 import { seoMeta } from "../lib/seo";
 import { useUi } from "../lib/stores";
 import { connectorFor, flattenStops, stopStates } from "../lib/trail";
@@ -42,6 +44,21 @@ export default function ResumenViaje() {
   const duplicate = useMutation({ mutationFn: () => api.journeys.duplicate(id), onSuccess: (j) => navigate(`/app/viajes/${j.id}/editar`) });
 
   const j = journey.data;
+  const { me } = useMe();
+  const qc = useQueryClient();
+  const [notice, setNotice] = useState<string | null>(null);
+  // «Estoy aquí»: marca una parada PLANEADA como visitada (solo con recorrido en curso y ruta planeada, no en aventura libre).
+  const checkIn = useMutation({
+    mutationFn: async (stop: { id: string; placeId: string; name: string }) => {
+      if (!rec || !me) throw new Error("Sin recorrido");
+      return { name: stop.name, ...(await submitVisit(me.id, id, rec.id, { clientMutationId: uuid(), placeId: stop.placeId, stopId: stop.id, visitedAt: new Date().toISOString(), timezone: browserTimezone() })) };
+    },
+    onSuccess: (r) => {
+      setNotice(r.status === "saved" ? `Marcaste que estás en «${r.name}».` : `Sin conexión: guardamos «${r.name}» en este dispositivo y se enviará al reconectar.`);
+      void qc.invalidateQueries({ queryKey: qk.visits(id) });
+      void qc.invalidateQueries({ queryKey: qk.journey(id) });
+    },
+  });
   const states = useMemo(() => (j ? stopStates(j, visits.data ?? []) : new Map()), [j, visits.data]);
   if (journey.isPending) return <LoadingBlock />;
   if (journey.isError || !j) return <QueryError error={journey.error} retry={() => journey.refetch()} />;
@@ -60,7 +77,15 @@ export default function ResumenViaje() {
     media: v.media.filter((m) => m.status === "READY").map((m) => ({ src: m.thumbUrl!, alt: m.caption ?? `Foto en ${v.place.name}` })),
     actions: editing ? <><Link to={`/app/viajes/${id}/visitas/${v.id}`} title="Editar recuerdo" aria-label={`Editar visita a ${v.place.name}`} className={buttonClass({ variant: "outline", size: "icon" })}><Pencil className="size-4" aria-hidden="true" /></Link><DeleteVisitButton journeyId={id} visitId={v.id} placeName={v.place.name} /></> : undefined,
   }));
-  const planItems: TrailItem[] = j.days.flatMap((d) => d.stops.map((s, i) => ({ id: s.id, title: s.place.name, subtitle: s.place.locality, state: states.get(s.id) ?? "pending", connector: connectorFor(j, d.stops, i) })));
+  const canCheckIn = inProgress && Boolean(rec) && j.preferences.explorationMode !== "FREE";
+  const planItems: TrailItem[] = j.days.flatMap((d) => d.stops.map((s, i) => {
+    const state = states.get(s.id) ?? "pending";
+    return {
+      id: s.id, title: s.place.name, subtitle: s.place.locality, state, connector: connectorFor(j, d.stops, i),
+      actions: canCheckIn && state !== "visited" ? <Button size="sm" loading={checkIn.isPending && checkIn.variables?.id === s.id} onClick={() => checkIn.mutate({ id: s.id, placeId: s.placeId, name: s.place.name })}><CheckCircle2 className="size-4" aria-hidden="true" /> Estoy aquí</Button> : undefined,
+    };
+  }));
+  const upcoming = canCheckIn ? planItems.filter((p) => p.state !== "visited") : [];
   const items = diary ? diaryItems : planItems;
 
   const markers: MapMarker[] = diary
@@ -95,6 +120,15 @@ export default function ResumenViaje() {
         <div className="story-completion-banner"><span className="story-check"><Check size={24} aria-hidden="true" /></span><span><strong>{j.status === "COMPLETED" ? "Recorrido completado" : "Tu historia sigue creciendo"}</strong><small>{vlist.length} visitas · {photos.length} fotos{spent.length ? ` · Gastado: ${spent.map((t) => formatMoney(t.minor, t.currency)).join(" + ")}` : ""}</small></span><AmazonArt /></div>
       </> : null}
 
+      {notice ? <Alert tone="success" className="mb-4" live="polite">{notice}</Alert> : null}
+      {checkIn.isError ? <Alert tone="danger" className="mb-4" live="assertive">No pudimos marcar esa parada. Inténtalo de nuevo.</Alert> : null}
+      {diary && upcoming.length > 0 ? (
+        <section className="mb-6" aria-label="Próximas paradas del plan">
+          <h2 className="mb-3 text-2xl">Próximas paradas</h2>
+          <p className="mb-3 text-sm text-muted-foreground">Toca «Estoy aquí» cuando llegues a una parada de tu plan.</p>
+          <JourneyTrail variant="card" items={upcoming} />
+        </section>
+      ) : null}
       <div className={diary ? "story-view-content" : "grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}>
         <section hidden={diary && view !== "history"} aria-label={diary ? "Diario" : "Plan"}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
