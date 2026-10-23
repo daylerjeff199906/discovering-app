@@ -36,7 +36,18 @@ function GoogleMark() {
  */
 export function GoogleButton({ mode, returnTo, termsAccepted = true }: { mode: "login" | "register"; returnTo: string; termsAccepted?: boolean }) {
   const caps = useQuery(capabilitiesQuery());
-  if (!caps.data?.auth.google) return null;
+  if (!caps.data) return null;
+  if (!caps.data.auth.google) {
+    // En producción, sin configurar, no se ofrece. En desarrollo se deja visible (desactivado) para que se note qué falta.
+    if (caps.data.appEnv === "production") return null;
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="auth-or" aria-hidden="true"><span>o</span></p>
+        <Button type="button" variant="outline" disabled className="google-button"><GoogleMark /> Continuar con Google</Button>
+        <p className="text-xs text-muted-foreground">Aún no está activado: faltan <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_CLIENT_SECRET</code> en el <code>.env</code> (ver docs/SETUP.md).</p>
+      </div>
+    );
+  }
   const href = `/api/v1/auth/google/start?mode=${mode}${mode === "register" ? "&terms=1" : ""}&returnTo=${encodeURIComponent(returnTo)}`;
   return (
     <div className="flex flex-col gap-3">
