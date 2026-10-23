@@ -3,9 +3,9 @@
 #   API:    docker run … poraqui-api                      (node dist/main.js)
 #   Worker: docker run … poraqui-api node dist/worker.js
 # Versiones fijadas (sin tags flotantes).
-FROM node:24.11.0-bookworm-slim AS base
-ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
-RUN npm install -g pnpm@12.8.1 && pnpm --version
+FROM node:24.15.0-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true COREPACK_HOME=/usr/local/share/corepack
+RUN npm install -g corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.8.1 --activate && pnpm --version
 WORKDIR /repo
 
 # ── build: instala todo y compila contratos, base de datos y API ─────────────
@@ -45,7 +45,6 @@ COPY --from=build /repo/packages/contracts/dist packages/contracts/dist
 COPY --from=build /repo/packages/database/dist packages/database/dist
 COPY --from=build /repo/packages/database/migrations packages/database/migrations
 COPY --from=build /repo/apps/api/dist apps/api/dist
-RUN chown -R node:node /repo
 USER node
 WORKDIR /repo/apps/api
 EXPOSE 4000

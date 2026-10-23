@@ -1,0 +1,119 @@
+# Dokploy: dominio HTTPS -> proxy:80. TLS lo gestiona Traefik.
+# Configura las variables de .env.production.example en Environment de Dokploy.
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: infra/Dockerfile.api
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    APP_ENV: production
+    API_PORT: "4000"
+    DATABASE_URL: ${DATABASE_URL:?Configura DATABASE_URL}
+    REDIS_URL: redis://redis:6379
+    WEB_ORIGIN: ${PUBLIC_SITE_URL:?Configura PUBLIC_SITE_URL con tu dominio HTTPS}
+    PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
+    ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-${PUBLIC_SITE_URL}}
+    COOKIE_SECURE: "true"
+    TRUST_PROXY: "true"
+    ENABLE_DEMO_CONTENT: "false"
+    RATE_LIMIT_ENABLED: "true"
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-poraqui}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-poraqui}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    command: ["node", "-e", "require('@por-aqui/database').runMigrations(process.env.DATABASE_URL).then(()=>console.log('Migraciones aplicadas')).catch(e=>{console.error(e);process.exit(1)})"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    <<: *backend
+    command: ["node", "dist/worker.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.web
+      args:
+        VITE_MAP_TILES_URL: ${VITE_MAP_TILES_URL:-}
+        VITE_MAP_ATTRIBUTION: ${VITE_MAP_ATTRIBUTION:-}
+        VITE_DEMO_BANNER: "false"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      API_INTERNAL_URL: http://api:4000
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  proxy:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.proxy
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    networks:
+      - default
+      - dokploy-network
+    restart: unless-stopped
+
+networks:
+  dokploy-network:
+    external: true
+
+volumes:
+  pgdata:
+  redisdata:

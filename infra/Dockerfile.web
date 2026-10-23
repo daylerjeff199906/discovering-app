@@ -1,9 +1,9 @@
 # Servidor SSR (React Router) de Por aquí. Contexto de construcción: la RAÍZ del repositorio.
 #   docker build -f infra/Dockerfile.web -t poraqui-web .
 # Las variables VITE_* se fijan en la CONSTRUCCIÓN (son públicas): --build-arg VITE_MAP_TILES_URL=…
-FROM node:24.11.0-bookworm-slim AS base
-ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
-RUN npm install -g pnpm@12.8.1 && pnpm --version
+FROM node:24.15.0-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true COREPACK_HOME=/usr/local/share/corepack
+RUN npm install -g corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.8.1 --activate && pnpm --version
 WORKDIR /repo
 
 FROM base AS build
@@ -43,9 +43,8 @@ COPY packages/ui/package.json packages/ui/
 COPY e2e/package.json e2e/
 RUN pnpm install --prod --frozen-lockfile --filter @por-aqui/web...
 COPY --from=build /repo/apps/web/build apps/web/build
-RUN chown -R node:node /repo
 USER node
 WORKDIR /repo/apps/web
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=3s --retries=5 CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["pnpm", "start"]
+CMD ["node", "node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]

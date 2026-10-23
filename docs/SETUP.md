@@ -102,6 +102,45 @@ Sin `ROUTING_PROVIDER` los traslados quedan «Por definir»; sin `GEOCODER_PROVI
 
 > Las imágenes de producción y el Caddyfile están escritos pero **no se construyeron ni ejecutaron** en esta beta (ver [STATUS.md](STATUS.md)).
 
+### Dokploy
+
+Referencia: [dominios de Docker Compose en Dokploy](https://docs.dokploy.com/docs/core/docker-compose/domains).
+
+1. Crea un servicio **Docker Compose** desde este repositorio y selecciona
+   `compose.yaml` en la raíz como archivo Compose.
+2. Copia las variables de tu archivo local `.env.production.example` (excluido de Git por contener credenciales)
+   a **Environment** de Dokploy. Configura tu dominio HTTPS en `PUBLIC_SITE_URL`,
+   una contraseña propia para PostgreSQL, `DATABASE_URL` con esa misma contraseña,
+   `APP_ENCRYPTION_KEY`, las credenciales de R2 y Resend y un remitente verificado.
+   Las variables adicionales de `.env.example` también pueden configurarse ahí.
+3. En **Domains**, asigna tu dominio al servicio **`proxy`**, puerto de contenedor
+   **`80`**, ruta `/`, con HTTPS. Traefik gestiona el certificado; Caddy recibe HTTP
+   y enruta `/api/*` a la API y el resto a la web.
+4. Despliega. El servicio `migrate` debe terminar con código 0 antes de que arranquen
+   la API y el worker. Las migraciones se aplican en un servicio separado por despliegue.
+
+Solo `proxy` se conecta a la red externa `dokploy-network` y a la red del stack.
+PostgreSQL, Redis, API y web se comunican por la red del stack sin publicar puertos
+en el host. Los datos de PostgreSQL y Redis persisten en volúmenes; no ejecutes
+`docker compose down -v` si quieres conservarlos.
+
+Las variables `VITE_MAP_*` son públicas y se incorporan durante el build: después
+de cambiarlas, reconstruye la web. La aplicación valida las credenciales obligatorias
+de producción al arrancar y no carga contenido de demostración.
+
+Para ejecutar el mismo Compose fuera de Dokploy (con un proxy conectado a esa red):
+
+```bash
+cp .env.production.example .env
+# Completa .env antes de continuar.
+docker network create dokploy-network # solo si todavía no existe
+docker compose up -d --build
+docker compose logs migrate api worker
+```
+
+La infraestructura local sigue disponible con `pnpm infra:up` y
+`infra/compose.yaml`.
+
 ### Límite de la revocación de medios
 
 Las lecturas de fotos se autorizan en cada petición, así que retirar/ocultar una publicación corta el acceso de inmediato. Los tickets de historias por enlace viven 15 min (`MEDIA_TICKET_TTL_SECONDS`) y las respuestas públicas pueden permanecer en cachés intermedias hasta 5 min (`Cache-Control: public, max-age=300`). No se puede retirar lo que alguien ya descargó.

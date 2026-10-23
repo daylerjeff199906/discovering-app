@@ -13,7 +13,7 @@ Administración de contenidos: `/app/catalogo` (rol `MODERATOR`). Permite editar
 | Herramienta | Versión |
 |---|---|
 | Node.js | 24 LTS (mínimo 22.22; ver `.nvmrc`) |
-| pnpm | 11 (`corepack enable` o `npm i -g pnpm@11.12.0`) |
+| pnpm | 12.8.1 (ver `packageManager`; Corepack 0.36.0 en Docker) |
 | Docker | Docker Desktop / Engine con Compose v2 |
 
 ## Puesta en marcha desde cero
@@ -48,6 +48,13 @@ El navegador usa **un solo origen** (`:5173`): Vite proxea `/api/*` hacia Nest, 
 3. Finaliza el recorrido → **Compartir** → elige visitas/fotos/notas y visibilidad → publica.
 4. `/explorar` muestra la historia; con otra cuenta puedes **guardarla**, **usarla como base** o **reportarla**.
 5. Moderación: `pnpm --filter @por-aqui/database db:promote tu@correo.com` y entra a `/moderacion`.
+
+## Docker / Dokploy
+
+El [compose.yaml](compose.yaml) de la raíz despliega PostGIS, Redis, migraciones,
+API, worker, web SSR y proxy. Los Dockerfiles de `infra/` usan Corepack con la
+versión de pnpm fijada por el proyecto. Instrucciones y variables en
+[docs/SETUP.md](docs/SETUP.md#dokploy).
 
 ## Scripts
 

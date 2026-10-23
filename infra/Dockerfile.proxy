@@ -1,0 +1,4 @@
+FROM caddy:2.10.2-alpine
+COPY infra/Caddyfile /etc/caddy/Caddyfile
+ENV SITE_ADDRESS=:80
+EXPOSE 80
