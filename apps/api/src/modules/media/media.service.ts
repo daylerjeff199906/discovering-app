@@ -135,6 +135,27 @@ export class MediaService {
     return this.dtoOf(updated);
   }
 
+  /**
+   * Reordena las fotos de una visita. `assetIds` debe ser exactamente el conjunto actual (una lista parcial o con
+   * ajenas se rechaza). La restricción única (visita, posición) exige mover primero a un rango temporal.
+   */
+  async reorderVisitMedia(user: AuthUser, visitId: string, assetIds: string[]): Promise<{ ok: true }> {
+    await this.db.transaction(async (tx) => {
+      const [visit] = await tx.select({ id: visits.id }).from(visits).where(and(eq(visits.id, visitId), eq(visits.ownerId, user.id))).for("update");
+      if (!visit) throw notFound("No encontramos esa visita.");
+      const current = await tx.select({ assetId: visitMedia.assetId }).from(visitMedia).where(and(eq(visitMedia.visitId, visitId), eq(visitMedia.ownerId, user.id)));
+      const have = new Set(current.map((r) => r.assetId));
+      if (new Set(assetIds).size !== assetIds.length || assetIds.length !== have.size || assetIds.some((id) => !have.has(id))) {
+        throw badRequest("INVALID_ORDER", "El orden debe incluir todas las fotos de la visita, sin repetir.");
+      }
+      await tx.update(visitMedia).set({ position: sql`${visitMedia.position} + 100000` }).where(eq(visitMedia.visitId, visitId));
+      for (const [i, id] of assetIds.entries()) {
+        await tx.update(visitMedia).set({ position: i }).where(and(eq(visitMedia.visitId, visitId), eq(visitMedia.assetId, id)));
+      }
+    });
+    return { ok: true };
+  }
+
   async setCaption(user: AuthUser, assetId: string, caption: string | null): Promise<AssetDto> {
     const asset = await this.owned(this.db, user.id, assetId);
     await this.db.update(visitMedia).set({ caption }).where(and(eq(visitMedia.assetId, assetId), eq(visitMedia.ownerId, user.id)));

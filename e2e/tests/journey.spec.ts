@@ -9,8 +9,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   /* ── Crear ruta manual y añadir paradas ── */
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await page.getByText("Armar manualmente").click();
-  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
-  await page.getByLabel("Ponle un nombre").fill("Mi día en Iquitos (e2e)");
+  await page.getByLabel("Nombre de tu viaje").fill("Mi día en Iquitos (e2e)");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await expect(page.getByLabel("Título del viaje")).toHaveValue("Mi día en Iquitos (e2e)");
@@ -18,8 +17,8 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   for (const name of ["Plaza de Armas de Iquitos", "Casa de Fierro", "Malecón Tarapacá"]) {
     await page.getByRole("button", { name: "Añadir parada" }).first().click();
     const dialog = page.getByRole("dialog", { name: "Añadir una parada" });
-    await dialog.getByLabel("Buscar lugar").fill(name);
-    await dialog.getByLabel("Buscar lugar").press("Enter");
+    await dialog.getByLabel("Buscar un lugar para añadir").fill(name);
+    await dialog.getByLabel("Buscar un lugar para añadir").press("Enter");
     await dialog.getByRole("button", { name: `Añadir ${name}` }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByRole("list", { name: "Paradas del día 1" }).getByRole("button", { name, exact: true })).toBeVisible();
@@ -43,6 +42,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   /* ── Recorrido: confirmar visita, foto, finalizar ── */
   await page.getByRole("button", { name: "Iniciar recorrido" }).click();
   await page.waitForURL(/\/recorrido/);
+  await page.getByRole("button", { name: "Iniciar recorrido" }).click(); // pantalla «Comenzar aventura»
   await expect(page.getByText("Registrar trayecto (GPS)")).toBeVisible();
   await page.getByRole("button", { name: "Confirmar visita" }).first().click();
   await expect(page.getByText(/Visita en «Plaza de Armas de Iquitos» registrada/)).toBeVisible();
@@ -50,21 +50,29 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await page.getByRole("link", { name: "Fotos y nota" }).first().click();
   await page.waitForURL(/\/visitas\//);
   await page.getByLabel("Nota").fill("Nota privada de la plaza");
+  await page.getByLabel(/¿Cuánto gastaste aquí\?/).fill("23.50");
+  await page.getByRole("radio", { name: "A pie" }).click();
+  await expect(page.getByRole("radio", { name: "A pie" })).toHaveAttribute("aria-checked", "true");
+  await page.getByLabel("Tu recomendación").fill("Ve temprano, hay menos gente");
   await page.getByRole("button", { name: "Guardar cambios" }).click();
   await expect(page.getByText("Guardado ✓")).toBeVisible();
-  await page.locator("#photo-input").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: await makeJpeg() });
+  await page.getByLabel("Elegir fotos de la visita").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: await makeJpeg() });
   await expect(page.getByText("Lista ✓")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByRole("button", { name: /Ver foto 1 de 1/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ver foto 1", exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Volver al viaje" }).click();
+  /* Diario: foto como polaroid + gasto y recomendación visibles solo para su autor */
+  await expect(page.locator(".polaroid-stack").first()).toBeVisible();
+  await expect(page.getByText(/23[.,]50/).first()).toBeVisible();
+  await expect(page.getByText("Ve temprano, hay menos gente").first()).toBeVisible();
   await page.goto(page.url().replace(/\/app\/viajes\/([^/?]+).*/, "/app/viajes/$1/recorrido"));
   await page.getByRole("button", { name: "Finalizar", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "¿Finalizar el recorrido?" })).toBeVisible();
-  await page.getByRole("button", { name: "Finalizar y guardar" }).click();
+  await expect(page.getByRole("dialog", { name: "Finalizar recorrido" })).toBeVisible();
+  await page.getByRole("button", { name: "Guardar recorrido" }).click();
   await expect(page.getByText("¡Recorrido finalizado!")).toBeVisible();
 
   /* ── Publicar ── */
-  await page.getByRole("link", { name: /Compartir \/ publicar/ }).click();
+  await page.goto(page.url().replace(/(\/app\/viajes\/[^/?]+).*/, "$1/compartir")); // el diario ahora comparte desde una hoja; la página de publicación sigue en /compartir
   await expect(page.getByRole("heading", { name: "Compartir tu historia" })).toBeVisible();
   await expect(page.getByLabel(/^Título/)).toHaveValue("Mi día en Iquitos (e2e)");
   await page.getByRole("radio", { name: /Comunidad/ }).check();
@@ -84,6 +92,8 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await expect(anon.getByRole("heading", { level: 1, name: "Mi día en Iquitos (e2e)" })).toBeVisible();
   const trail = anon.getByRole("list", { name: /Paradas de/ });
   await expect(trail.locator("> li")).toHaveCount(1); // solo la visita confirmada (1 de 3 paradas)
+  await expect(anon.getByText("Ve temprano, hay menos gente")).toHaveCount(0); // la recomendación solo se publica si el autor lo elige
+  await expect(anon.getByText(/23[.,]50/)).toHaveCount(0); // el gasto nunca se publica
   await expect(anon.getByText("Nota privada de la plaza")).toHaveCount(0); // las notas no se publican salvo que el autor las elija
   await expect(anon.getByRole("img", { name: /Foto en Plaza de Armas/ }).first()).toBeVisible(); // la foto derivada se sirve públicamente
   const html = await (await anonCtx.request.get(slugHref!)).text();
@@ -106,6 +116,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await expect(reader.getByRole("list", { name: "Paradas del día 1" }).getByText("Plaza de Armas de Iquitos")).toBeVisible();
   await expect(reader.getByText("Nota privada de la plaza")).toHaveCount(0);
   await reader.goto("/app/guardados");
+  await reader.getByRole("tab", { name: "Historias" }).click();
   await expect(reader.getByRole("heading", { name: "Mi día en Iquitos (e2e)" })).toBeVisible();
 
   /* ── El autor retira la publicación: el acceso se corta ── */
@@ -113,6 +124,7 @@ test("flujo completo: cuenta → ruta manual → recorrido con foto → publicar
   await expect(page.getByText("Privado", { exact: true }).first()).toBeVisible();
   expect((await anonCtx.request.get(slugHref!)).status()).toBe(410);
   await reader.goto("/app/guardados");
+  await reader.getByRole("tab", { name: "Historias" }).click();
   await expect(reader.getByText("Historia no disponible")).toBeVisible();
 
   await anonCtx.close();
@@ -123,7 +135,6 @@ test("ruta automática: propuesta explicable, aplicación y persistencia", async
   await signUpVerifyLogin(page, "auto");
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();

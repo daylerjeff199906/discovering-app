@@ -1,7 +1,7 @@
 import type { PublicRouteDto } from "@por-aqui/contracts";
 import { Alert, Avatar, Badge, Button, Card, Dialog, EmptyState, Field, JourneyTrail, Lightbox, Select, Tabs, Textarea, type TrailItem } from "@por-aqui/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bookmark, BookmarkCheck, Copy, Flag, Share2 } from "lucide-react";
+import { Lightbulb, Bookmark, BookmarkCheck, Copy, Flag, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { api, errorMessage } from "../lib/api";
@@ -70,7 +70,7 @@ export function StoryView({ route, shareToken }: { route: PublicRouteDto; shareT
         subtitle: [e.locationLabel, e.visitedDate ? formatDate(e.visitedDate) : null, e.locationPrecision === "APPROXIMATE" ? "ubicación aproximada" : e.locationPrecision === "HIDDEN" ? "ubicación oculta" : null].filter(Boolean).join(" · "),
         state: "visited" as const,
         media: e.media.map((m) => ({ src: m.thumbUrl, alt: m.altText ?? m.caption ?? `Foto en ${e.displayName}` })),
-        note: e.note,
+        note: e.note || e.recommendation ? <>{e.note ? <span>{e.note}</span> : null}{e.recommendation ? <p className="visit-tip"><Lightbulb size={15} aria-hidden="true" /> <span><strong>Recomendación:</strong> {e.recommendation}</span></p> : null}</> : null,
       })),
     [route.entries],
   );

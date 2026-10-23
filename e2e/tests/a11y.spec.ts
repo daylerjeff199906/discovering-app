@@ -32,7 +32,6 @@ test("accesibilidad (axe) en el editor, el recorrido, la visita y compartir", as
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await audit(page, "/app/viajes/nuevo");
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
@@ -51,21 +50,22 @@ test("accesibilidad (axe) en el editor, el recorrido, la visita y compartir", as
 
   await page.getByRole("button", { name: "Iniciar recorrido" }).click();
   await page.waitForURL(/\/recorrido/);
+  await page.getByRole("button", { name: "Iniciar recorrido" }).click(); // pantalla «Comenzar aventura»
   await page.getByRole("button", { name: "Confirmar visita" }).first().click();
   await expect(page.getByText(/registrada\./)).toBeVisible();
   await audit(page, "recorrido en vivo");
   await page.getByRole("link", { name: "Fotos y nota" }).first().click();
-  await page.locator("#photo-input").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: await makeJpeg() });
+  await page.getByLabel("Elegir fotos de la visita").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: await makeJpeg() });
   await expect(page.getByText("Lista ✓")).toBeVisible({ timeout: 60_000 });
   await audit(page, "visita con foto");
 
   await page.goto(page.url().replace(/\/visitas\/.*/, "/recorrido"));
   await page.getByRole("button", { name: "Finalizar", exact: true }).click();
   await audit(page, "diálogo finalizar");
-  await page.getByRole("button", { name: "Finalizar y guardar" }).click();
+  await page.getByRole("button", { name: "Guardar recorrido" }).click();
   await expect(page.getByText("¡Recorrido finalizado!")).toBeVisible();
   await audit(page, "diario");
-  await page.getByRole("link", { name: /Compartir \/ publicar/ }).click();
+  await page.goto(page.url().replace(/(\/app\/viajes\/[^/?]+).*/, "$1/compartir")); // el diario ahora comparte desde una hoja; la página de publicación sigue en /compartir
   await expect(page.getByRole("heading", { name: "Compartir tu historia" })).toBeVisible();
   await audit(page, "compartir");
   await page.goto("/app/perfil");

@@ -80,3 +80,13 @@ docker compose -f infra/compose.yaml exec -T postgres pg_restore -U poraqui -d p
 ```
 
 Los archivos (bucket S3) se respaldan aparte (versionado del bucket o `mc mirror`). Las copias de la base de datos contienen datos personales: cífralas y limita el acceso. **Nota:** este procedimiento está documentado, no ejecutado automáticamente en la beta.
+
+## Datos opcionales de una visita (migración `0003_visit_expense_transport_tip`)
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `visits.expense_minor` / `visits.expense_currency` | `integer` / `text` | Gasto en unidad menor + moneda ISO 4217. Van juntos (`visits_expense_chk`). **Siempre privado.** |
+| `visits.transport_mode` | `text` | Mismo catálogo que los modos de transporte (`visits_transport_chk`). **Siempre privado.** |
+| `visits.recommendation` | `text` (≤1000) | Consejo del autor. |
+| `publication_entries.recommendation` | `text` | Copia congelada en la publicación; solo se llena si el autor marca «Incluir mi recomendación» (`includeRecommendation`). |
+

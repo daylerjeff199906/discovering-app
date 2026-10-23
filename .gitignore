@@ -14,3 +14,4 @@ test-results
 .api.log
 .dev-mail
 .env.bak-*
+.mentu/

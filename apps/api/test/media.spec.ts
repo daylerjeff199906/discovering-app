@@ -67,6 +67,27 @@ describe("Fotos", () => {
     expect(v.media[0].status).toBe("READY");
   });
 
+  it("reordena las fotos de una visita; exige el conjunto completo y solo el dueño puede", async () => {
+    const u = await newUser(t);
+    const other = await newUser(t);
+    const { visit } = await visitFor(t, u);
+    const jpg = await jpegWithExif(320, 240);
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++) ids.push((await uploadPhoto(t, u, visit.id, jpg)).auth.body.assetId);
+    await t.outbox.runPendingInline();
+    const order = async () => ((await u.client.get(`/visits/${visit.id}`)).body.media as { id: string }[]).map((m) => m.id);
+    expect(await order()).toEqual(ids);
+
+    const reversed = [...ids].reverse();
+    expect((await u.client.put(`/visits/${visit.id}/media/order`, { assetIds: reversed })).status).toBe(200);
+    expect(await order()).toEqual(reversed);
+
+    expect((await u.client.put(`/visits/${visit.id}/media/order`, { assetIds: ids.slice(0, 2) })).status).toBe(400);
+    expect((await u.client.put(`/visits/${visit.id}/media/order`, { assetIds: [ids[0], ids[0], ids[1]] })).status).toBe(400);
+    expect((await other.client.put(`/visits/${visit.id}/media/order`, { assetIds: ids })).status).toBe(404);
+    expect(await order()).toEqual(reversed);
+  });
+
   it("completar es idempotente", async () => {
     const u = await newUser(t);
     const { visit } = await visitFor(t, u);

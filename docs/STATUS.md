@@ -98,3 +98,10 @@ Además: límite de peticiones real (429 + `Retry-After`), cabeceras, CORS, Open
 - `infra/Dockerfile.api` e `infra/Dockerfile.web` **se construyeron y arrancaron** en esta máquina (la construcción destapó un valor inválido de `watchOptions` que ya está corregido). Prueba de humo contra la infraestructura local: la API responde `ready` ejecutándose como usuario `node` (no root) y el servidor web renderiza en servidor la historia de ejemplo consultando a la API.
 - **No validado**: `infra/compose.prod.yaml` (migración como servicio único, orden de arranque), `infra/Caddyfile` (TLS automático, enrutado `/api` vs resto), cookies `Secure` tras un proxy real, y el comportamiento con `APP_ENV=production` de extremo a extremo.
 - Nota: `docker run --env-file .env` no recorta los comentarios en línea del `.env.example`; con Compose o con variables explícitas funciona.
+
+## Visita: datos opcionales y fotos reordenables
+- Gasto (monto + moneda), transporte (tarjetas con icono) y recomendación son opcionales. Gasto y transporte son siempre privados; la recomendación solo se publica si el autor marca «Incluir mi recomendación» al compartir.
+- El diario muestra las fotos como polaroids y suma lo gastado por moneda.
+- Las fotos de una visita se reordenan arrastrando (`PUT /visits/:id/media/order`; teclado: asa «Mover foto»).
+- Pruebas E2E: usar `PREVIEW_DEV_MAIL=1 RATE_LIMIT_ENABLED=false pnpm preview` (correos a archivo en vez de Resend).
+

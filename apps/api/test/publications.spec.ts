@@ -110,6 +110,32 @@ describe("Publicar", () => {
     expect(pub.entries[1].note).toBeNull();
   });
 
+  it("gasto y transporte nunca se publican; la recomendación solo si el autor la elige", async () => {
+    const u = await newUser(t);
+    const c = await completedJourney(u);
+    const patched = await u.client.patch(`/visits/${c.v1.id}`, { expenseMinor: 98765, expenseCurrency: "USD", transportMode: "TRANSIT", recommendation: "CONSEJO-del-autor", expectedVersion: c.v1.version });
+    expect(patched.status, JSON.stringify(patched.body)).toBe(200);
+    const draft = (await u.client.get(`/journeys/${c.journey.id}/publication`)).body;
+    expect(draft.candidates.find((x: { visitId: string }) => x.visitId === c.v1.id).recommendation).toBe("CONSEJO-del-autor");
+
+    const off = await u.client.put(`/journeys/${c.journey.id}/publication`, publishBody(c));
+    expect(off.status).toBe(200);
+    let raw = JSON.stringify((await t.client().get(`/public/routes/${off.body.slug}`)).body);
+    expect(raw).not.toContain("CONSEJO-del-autor");
+
+    const body = publishBody(c);
+    (body.entries[0] as { includeRecommendation?: boolean }).includeRecommendation = true;
+    const on = await u.client.put(`/journeys/${c.journey.id}/publication`, { ...body, expectedRevision: off.body.revision });
+    expect(on.status).toBe(200);
+    const pub = (await t.client().get(`/public/routes/${on.body.slug}`)).body;
+    expect(pub.entries[0].recommendation).toBe("CONSEJO-del-autor");
+    expect(pub.entries[1].recommendation).toBeNull();
+    raw = JSON.stringify(pub);
+    expect(raw).not.toContain("98765");
+    expect(raw).not.toContain("expense");
+    expect(raw).not.toContain("TRANSIT");
+  });
+
   it("editar el diario no altera la instantánea publicada hasta «Actualizar publicación»", async () => {
     const u = await newUser(t);
     const c = await completedJourney(u);

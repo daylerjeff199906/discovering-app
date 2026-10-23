@@ -4,6 +4,12 @@ import { expect, type Page } from "@playwright/test";
 import sharp from "sharp";
 
 /** Sin RESEND_API_KEY el worker deja cada correo como archivo en esta carpeta (raíz del repo). */
+// Mismo DEV_MAIL_DIR que usa el worker (viene del .env de la raíz si no se pasa por entorno).
+try {
+  process.loadEnvFile(path.resolve(process.cwd(), "..", ".env"));
+} catch {
+  /* sin .env: se usa el valor por defecto */
+}
 export const DEV_MAIL_DIR = path.resolve(process.cwd(), "..", process.env.DEV_MAIL_DIR ?? ".dev-mail");
 export const PASSWORD = "claveSegura123";
 
@@ -42,7 +48,7 @@ export async function signUpVerifyLogin(page: Page, prefix = "e2e"): Promise<Acc
 
   await page.goto("/registro");
   await page.getByLabel("Tu nombre").fill(name);
-  await page.getByLabel("Nombre de usuario", { exact: true }).fill(username);
+  await page.getByLabel(/^Nombre de usuario/).fill(username);
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByLabel(/^Contraseña/).fill(PASSWORD);
   await page.getByLabel("Confirmar contraseña").fill(PASSWORD);
@@ -63,7 +69,7 @@ export async function signUpVerifyLogin(page: Page, prefix = "e2e"): Promise<Acc
   await page.getByRole("button", { name: "Ingresar" }).click();
   await page.waitForURL(/\/bienvenida/);
   await page.getByRole("button", { name: "Lo haré después" }).click();
-  await page.waitForURL(/\/app\/viajes/);
+  await page.waitForURL(/\/app\/(viajes|inicio)/);
   return { name, username, email };
 }
 

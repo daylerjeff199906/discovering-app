@@ -8,9 +8,12 @@ const root = path.resolve(import.meta.dirname, "..");
 if (existsSync(path.join(root, ".env"))) process.loadEnvFile(path.join(root, ".env"));
 const webPort = process.env.WEB_SSR_PORT ?? "3000";
 
+// PREVIEW_DEV_MAIL=1: correos a archivo (DEV_MAIL_DIR) en vez de Resend; lo necesitan las pruebas E2E, que leen los enlaces de ahí.
+const mailEnv = process.env.PREVIEW_DEV_MAIL === "1" ? { RESEND_API_KEY: "" } : {};
+
 const procs = [
-  ["api", "node", ["apps/api/dist/main.js"], {}],
-  ["worker", "node", ["apps/api/dist/worker.js"], {}],
+  ["api", "node", ["apps/api/dist/main.js"], mailEnv],
+  ["worker", "node", ["apps/api/dist/worker.js"], mailEnv],
   ["web", "pnpm", ["--filter", "@por-aqui/web", "start"], { PORT: webPort }],
   ["proxy", "node", ["scripts/local-proxy.mjs"], { WEB_SSR_PORT: webPort }],
 ];

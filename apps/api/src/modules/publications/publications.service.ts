@@ -130,6 +130,7 @@ export class PublicationsService {
         visitedAt: v.visitedAt.toISOString(),
         timezone: v.timezone,
         note: v.note,
+        recommendation: v.recommendation,
         media: (media.get(v.id) ?? []).filter((m) => m.status === "READY").map((m) => ({ id: m.id, thumbUrl: m.thumbUrl, displayUrl: m.displayUrl, caption: m.caption })),
       })),
       hasTrack,
@@ -210,6 +211,7 @@ export class PublicationsService {
           publicLocation: point,
           locationPrecision: e.locationPrecision,
           note: e.includeNote ? v.note : null,
+          recommendation: e.includeRecommendation ? v.recommendation : null,
           visitedLocalDate: local,
           catalogPlaceId: snap.scope === "CATALOG" ? v.placeId : null,
           media: e.media,
@@ -250,7 +252,7 @@ export class PublicationsService {
       for (const e of entries) {
         const [entry] = await tx
           .insert(publicationEntries)
-          .values({ versionId: version!.id, position: e.position, displayName: e.displayName, locationLabel: e.locationLabel, publicLocation: e.publicLocation, locationPrecision: e.locationPrecision, note: e.note, visitedLocalDate: e.visitedLocalDate, catalogPlaceId: e.catalogPlaceId })
+          .values({ versionId: version!.id, position: e.position, displayName: e.displayName, locationLabel: e.locationLabel, publicLocation: e.publicLocation, locationPrecision: e.locationPrecision, note: e.note, recommendation: e.recommendation, visitedLocalDate: e.visitedLocalDate, catalogPlaceId: e.catalogPlaceId })
           .returning({ id: publicationEntries.id });
         for (const [i, m] of e.media.entries()) {
           await tx.insert(publicationMedia).values({ entryId: entry!.id, assetId: m.assetId, position: i, caption: m.caption ?? null, altText: m.altText ?? null });
@@ -381,6 +383,7 @@ export class PublicationsService {
       location: e.publicLocation ? { lng: e.publicLocation.lng, lat: e.publicLocation.lat } : null,
       locationPrecision: e.locationPrecision as PublicEntry["locationPrecision"],
       note: e.note,
+      recommendation: e.recommendation,
       visitedDate: e.visitedLocalDate,
       media: mediaRows.filter((r) => r.m.entryId === e.id).map((r) => ({ url: url(r.a, "display"), thumbUrl: url(r.a, "thumb"), caption: r.m.caption, altText: r.m.altText })),
     }));

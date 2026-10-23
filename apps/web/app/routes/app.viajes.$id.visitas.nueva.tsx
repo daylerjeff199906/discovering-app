@@ -1,4 +1,5 @@
 import { Alert, Button, Field, Input, Select, Textarea } from "@por-aqui/ui";
+import { VisitExtrasFields, emptyExtras, expenseError, extrasPayload } from "../components/visit-extras";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, Clock, Info, MapPin } from "lucide-react";
@@ -59,6 +60,7 @@ export default function NuevaVisita() {
   const [tz, setTz] = useState(browserTimezone());
   const [when, setWhen] = useState(() => toLocalInput(new Date().toISOString(), browserTimezone()));
   const [note, setNote] = useState("");
+  const [extras, setExtras] = useState(emptyExtras);
   const [clientMutationId] = useState(uuid); // el mismo id en cada reintento: nunca duplica
 
   const save = useMutation({
@@ -67,7 +69,7 @@ export default function NuevaVisita() {
       const j = journey.data!;
       let rec = j.recording;
       if (!rec) rec = await api.recording.start(id); // un viaje sin iniciar se inicia al registrar la primera visita
-      const payload = { clientMutationId, ...choice!, visitedAt: fromLocalInput(when, tz), timezone: tz, note: note.trim() || null, retroactive: rec.status === "COMPLETED" ? true : undefined };
+      const payload = { clientMutationId, ...choice!, visitedAt: fromLocalInput(when, tz), timezone: tz, note: note.trim() || null, ...extrasPayload(extras), retroactive: rec.status === "COMPLETED" ? true : undefined };
       if (createdVisitId || files.length) {
         let visitId = createdVisitId;
         if (!visitId) {
@@ -75,7 +77,7 @@ export default function NuevaVisita() {
           visitId = v.id; setCreatedVisitId(v.id);
         } else {
           const existing = await api.visits.get(visitId);
-          await api.visits.update(visitId, { note: payload.note, visitedAt: payload.visitedAt, expectedVersion: existing.version });
+          await api.visits.update(visitId, { note: payload.note, visitedAt: payload.visitedAt, ...extrasPayload(extras), expectedVersion: existing.version });
         }
         for (const file of files) {
           const job = jobs.current.get(file) ?? {};
@@ -128,13 +130,14 @@ export default function NuevaVisita() {
         <VisitPhotoPicker files={files} onChange={(next) => void changePhotos(next)} disabled={save.isPending || changingPhotos} />
         {photoError ? <Alert tone="danger" live="assertive">{photoError}</Alert> : null}
         <Field label="¿Qué quieres recordar?" hint={`${note.length}/4000`}>{(c) => <Textarea {...c} value={note} disabled={save.isPending} maxLength={4000} onChange={(e) => setNote(e.target.value)} rows={4} placeholder="Un lugar, un detalle, lo que sentiste al estar aquí…" />}</Field>
+        <VisitExtrasFields value={extras} onChange={setExtras} disabled={save.isPending} />
         <details className="visit-timezone"><summary>Zona horaria: {tz}</summary><Field label="Zona horaria">{(c) => <Select {...c} value={tz} disabled={save.isPending} onChange={(e) => { const next = e.target.value; setWhen(toLocalInput(fromLocalInput(when, tz), next)); setTz(next); }}>{zones().map((z) => <option key={z} value={z}>{z}</option>)}</Select>}</Field></details>
         <p className="visit-past-note"><Info size={16} aria-hidden="true" /> Puedes registrar una visita pasada.</p>
         {progress && save.isPending ? <p role="status" className="text-sm text-primary">{progress}</p> : null}
         {createdVisitId && save.isError ? <Alert tone="warning">La visita ya está guardada. Puedes reintentar las fotos; no se creará otra visita.</Alert> : null}
         {save.isError ? <Alert tone="danger" live="assertive">{errorMessage(save.error, save.error instanceof Error ? save.error.message : undefined)}</Alert> : null}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" className="w-full" disabled={!choice || changingPhotos} loading={save.isPending}>{createdVisitId ? "Guardar cambios y fotos" : "Guardar visita"}</Button>
+          <Button type="submit" className="w-full" disabled={!choice || changingPhotos || Boolean(expenseError(extras))} loading={save.isPending}>{createdVisitId ? "Guardar cambios y fotos" : "Guardar visita"}</Button>
           <Button variant="ghost" disabled={save.isPending || changingPhotos} onClick={() => createdVisitId ? navigate(`/app/viajes/${id}`) : navigate(-1)}>{createdVisitId ? "Volver al diario" : "Cancelar"}</Button>
         </div>
       </form>

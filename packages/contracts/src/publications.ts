@@ -11,6 +11,8 @@ export type LocationPrecision = z.infer<typeof locationPrecisionSchema>;
 export const publishEntryInputSchema = z.object({
   visitId: uuidSchema,
   includeNote: z.boolean().default(false),
+  /** La recomendación de la visita solo se publica si el autor lo elige. Gasto y transporte nunca se publican. */
+  includeRecommendation: z.boolean().default(false),
   locationPrecision: locationPrecisionSchema.default("EXACT"),
   media: z
     .array(z.object({ assetId: uuidSchema, caption: z.string().trim().max(300).nullable().optional(), altText: z.string().trim().max(300).nullable().optional() }))
@@ -51,6 +53,7 @@ export const publicationCandidateSchema = z.object({
   visitedAt: z.string(),
   timezone: z.string(),
   note: z.string().nullable(),
+  recommendation: z.string().nullable(),
   media: z.array(z.object({ id: uuidSchema, thumbUrl: z.string().nullable(), displayUrl: z.string().nullable(), caption: z.string().nullable() })),
 });
 export const publicationDraftDtoSchema = z.object({
@@ -82,6 +85,7 @@ export const publicEntrySchema = z.object({
   location: z.object({ lng: z.number(), lat: z.number() }).nullable(),
   locationPrecision: locationPrecisionSchema,
   note: z.string().nullable(),
+  recommendation: z.string().nullable(),
   visitedDate: z.string().nullable(),
   media: z.array(publicMediaSchema),
 });

@@ -157,7 +157,18 @@ export function JourneyTrail({
                         </span>
                       </div>
                       {item.subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{item.subtitle}</p> : null}
-                      {variant === "diary" && item.media?.length ? <ul className="diary-entry-photos">{item.media.slice(0, 4).map((m, mi) => <li key={m.src}><button type="button" disabled={!onMediaClick} onClick={() => onMediaClick?.(item.id, mi)} aria-label={`Ver foto: ${m.alt}`}><img src={m.src} alt={m.alt} loading="lazy" width={300} height={200} /></button></li>)}</ul> : null}
+                      {variant === "diary" && item.media?.length ? (
+                        <ul className="polaroid-stack" data-count={Math.min(item.media.length, 4)} aria-label={`Fotos de ${item.title}`}>
+                          {item.media.slice(0, 4).map((m, mi, arr) => (
+                            <li key={m.src} style={{ ["--tilt" as string]: `${[-3.5, 2.5, -1.5, 3][mi % 4]}deg` }}>
+                              <button type="button" disabled={!onMediaClick} onClick={() => onMediaClick?.(item.id, mi)} aria-label={`Ver foto: ${m.alt}`}>
+                                <img src={m.src} alt={m.alt} loading="lazy" width={300} height={300} />
+                                {mi === arr.length - 1 && item.media!.length > arr.length ? <span className="polaroid-more">+{item.media!.length - arr.length}</span> : null}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
                       {item.note ? <div className="mt-2 whitespace-pre-wrap text-[0.95rem]">{item.note}</div> : null}
                       {item.actions ? <div className="mt-3 flex flex-wrap items-center gap-2">{item.actions}</div> : null}
                     </div>

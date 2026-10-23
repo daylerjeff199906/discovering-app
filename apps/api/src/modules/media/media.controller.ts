@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Res } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Put, Res } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
-import { createUploadInputSchema, updateMediaInputSchema, type CreateUploadInput } from "@por-aqui/contracts";
+import { createUploadInputSchema, reorderVisitMediaInputSchema, updateMediaInputSchema, type CreateUploadInput } from "@por-aqui/contracts";
 import type { Response } from "express";
 import { z } from "zod";
 import { Api, type AuthUser, CurrentUser, OptionalUser, Public, RateLimit } from "../../common/decorators";
@@ -21,6 +21,12 @@ export class MediaController {
   @Api({ summary: "Reservar subida: devuelve un POST prefirmado de corta duración con límite de tamaño", body: createUploadInputSchema, status: 201 })
   reserve(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string, @Body() body: CreateUploadInput) {
     return this.media.reserveVisitUpload(user, id, body);
+  }
+
+  @Put("visits/:id/media/order")
+  @Api({ summary: "Reordenar las fotos de una visita", body: reorderVisitMediaInputSchema })
+  reorder(@CurrentUser() user: AuthUser, @Param("id", uuid()) id: string, @Body() body: { assetIds: string[] }) {
+    return this.media.reorderVisitMedia(user, id, body.assetIds);
   }
 
   @Post("me/avatar/uploads")

@@ -17,6 +17,7 @@ import { visitsQuery } from "../lib/query";
 import { seoMeta } from "../lib/seo";
 import { useUi } from "../lib/stores";
 import { connectorFor, flattenStops, stopStates } from "../lib/trail";
+import { VisitExtrasView, formatMoney, totalsByCurrency } from "../components/visit-extras";
 import type { Route } from "./+types/app.viajes.$id";
 
 export function meta(_: Route.MetaArgs) {
@@ -55,7 +56,7 @@ export default function ResumenViaje() {
     title: v.place.name,
     subtitle: `${formatDateTime(v.visitedAt, v.timezone)}${v.stopId ? "" : " · añadido durante el recorrido"}`,
     state: "visited",
-    note: v.note,
+    note: v.note || v.expenseMinor !== null || v.transportMode || v.recommendation ? <>{v.note ? <span>{v.note}</span> : null}<VisitExtrasView visit={v} /></> : null,
     media: v.media.filter((m) => m.status === "READY").map((m) => ({ src: m.thumbUrl!, alt: m.caption ?? `Foto en ${v.place.name}` })),
     actions: editing ? <><Link to={`/app/viajes/${id}/visitas/${v.id}`} title="Editar recuerdo" aria-label={`Editar visita a ${v.place.name}`} className={buttonClass({ variant: "outline", size: "icon" })}><Pencil className="size-4" aria-hidden="true" /></Link><DeleteVisitButton journeyId={id} visitId={v.id} placeName={v.place.name} /></> : undefined,
   }));
@@ -66,6 +67,7 @@ export default function ResumenViaje() {
     ? vlist.map((v, i) => ({ id: v.id, lng: v.place.lng, lat: v.place.lat, index: i + 1, state: "visited" as const, label: `${i + 1}. ${v.place.name}` }))
     : stops.map((s) => ({ id: s.id, lng: s.place.lng, lat: s.place.lat, index: s.index, state: states.get(s.id) ?? "pending", label: `${s.index}. ${s.place.name}` }));
   const lines: MapLine[] = track.data?.segments.map((s) => ({ id: s.id, coords: s.points.map((p) => [p.lng, p.lat] as [number, number]) })) ?? [];
+  const spent = totalsByCurrency(vlist);
   const photos = vlist.flatMap((v) => v.media.filter((m) => m.status === "READY").map((m) => ({ src: m.displayUrl!, alt: m.caption ?? `Foto en ${v.place.name}`, caption: m.caption, visitId: v.id })));
 
   return (
@@ -90,7 +92,7 @@ export default function ResumenViaje() {
       {diary ? <>
         <p className="story-journey-title">{j.title}</p>
         <Tabs className="story-view-tabs" label="Vista de mi historia" value={view} onChange={setView} tabs={[{ id: "history", label: <span><BookOpen size={18} aria-hidden="true" /> Historia</span> }, { id: "map", label: <span><MapIcon size={18} aria-hidden="true" /> Mapa</span> }, { id: "track", label: <span><RouteIcon size={18} aria-hidden="true" /> Trayecto</span> }]} />
-        <div className="story-completion-banner"><span className="story-check"><Check size={24} aria-hidden="true" /></span><span><strong>{j.status === "COMPLETED" ? "Recorrido completado" : "Tu historia sigue creciendo"}</strong><small>{vlist.length} visitas · {photos.length} fotos</small></span><AmazonArt /></div>
+        <div className="story-completion-banner"><span className="story-check"><Check size={24} aria-hidden="true" /></span><span><strong>{j.status === "COMPLETED" ? "Recorrido completado" : "Tu historia sigue creciendo"}</strong><small>{vlist.length} visitas · {photos.length} fotos{spent.length ? ` · Gastado: ${spent.map((t) => formatMoney(t.minor, t.currency)).join(" + ")}` : ""}</small></span><AmazonArt /></div>
       </> : null}
 
       <div className={diary ? "story-view-content" : "grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}>

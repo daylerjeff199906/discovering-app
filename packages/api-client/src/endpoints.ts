@@ -138,6 +138,7 @@ export function createApi(http: HttpClient) {
       complete: (id: string) => http.post<AssetDto>(`/media/${id}/complete`),
       status: (id: string, o?: Sig) => http.get<AssetDto>(`/media/${id}`, o),
       retry: (id: string) => http.post<AssetDto>(`/media/${id}/retry`),
+      reorder: (visitId: string, assetIds: string[]) => http.put<{ ok: true }>(`/visits/${visitId}/media/order`, { assetIds }),
       caption: (id: string, caption: string | null) => http.patch<AssetDto>(`/media/${id}`, { caption }),
       remove: (id: string) => http.delete<{ ok: true }>(`/media/${id}`),
     },

@@ -34,4 +34,8 @@ export const uploadAuthorizationSchema = z.object({
 });
 export type UploadAuthorization = z.infer<typeof uploadAuthorizationSchema>;
 
+/** Nuevo orden de las fotos de una visita (ids completos, en el orden deseado). */
+export const reorderVisitMediaInputSchema = z.object({ assetIds: z.array(uuidSchema).min(1).max(50) });
+export type ReorderVisitMediaInput = z.infer<typeof reorderVisitMediaInputSchema>;
+
 export const updateMediaInputSchema = z.object({ caption: z.string().trim().max(300).nullable().optional() });

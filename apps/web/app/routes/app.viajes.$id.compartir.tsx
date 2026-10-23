@@ -25,6 +25,7 @@ const VIS_HELP: Record<Visibility, string> = {
 interface EntryState {
   include: boolean;
   includeNote: boolean;
+  includeRecommendation: boolean;
   precision: (typeof LOCATION_PRECISIONS)[number];
   assets: Set<string>;
 }
@@ -67,7 +68,7 @@ export default function Compartir() {
     const next: Record<string, EntryState> = {};
     for (const c of d.candidates) {
       const prev = cur?.entries.find((e) => e.visitId === c.visitId);
-      next[c.visitId] = { include: cur ? Boolean(prev) : true, includeNote: prev?.includeNote ?? false, precision: prev?.locationPrecision ?? "EXACT", assets: new Set(prev ? prev.media.map((m) => m.assetId) : c.media.map((m) => m.id)) };
+      next[c.visitId] = { include: cur ? Boolean(prev) : true, includeNote: prev?.includeNote ?? false, includeRecommendation: prev?.includeRecommendation ?? false, precision: prev?.locationPrecision ?? "EXACT", assets: new Set(prev ? prev.media.map((m) => m.assetId) : c.media.map((m) => m.id)) };
     }
     setEntries(next);
   }, [d, initFor, search]);
@@ -85,7 +86,7 @@ export default function Compartir() {
     locationLabel: locationLabel.trim() || null,
     transportSummary: transportSummary.trim() || null,
     shareExactTrack: exactTrack,
-    entries: d!.candidates.filter((c) => entries[c.visitId]?.include).map((c) => ({ visitId: c.visitId, includeNote: entries[c.visitId]!.includeNote && Boolean(c.note), locationPrecision: entries[c.visitId]!.precision, media: [...entries[c.visitId]!.assets].map((assetId) => ({ assetId })) })),
+    entries: d!.candidates.filter((c) => entries[c.visitId]?.include).map((c) => ({ visitId: c.visitId, includeNote: entries[c.visitId]!.includeNote && Boolean(c.note), includeRecommendation: entries[c.visitId]!.includeRecommendation && Boolean(c.recommendation), locationPrecision: entries[c.visitId]!.precision, media: [...entries[c.visitId]!.assets].map((assetId) => ({ assetId })) })),
     expectedRevision: d!.publication?.revision ?? undefined,
   });
 
@@ -197,6 +198,12 @@ export default function Compartir() {
                           <label className="flex items-start gap-2 text-sm">
                             <input type="checkbox" className="mt-0.5 size-4 accent-[var(--primary)]" checked={e.includeNote} onChange={(ev) => upd({ includeNote: ev.target.checked })} />
                             <span>Incluir mi nota: <em className="text-muted-foreground">«{c.note.length > 120 ? `${c.note.slice(0, 120)}…` : c.note}»</em></span>
+                          </label>
+                        ) : null}
+                        {c.recommendation ? (
+                          <label className="flex items-start gap-2 text-sm">
+                            <input type="checkbox" className="mt-0.5 size-4 accent-[var(--primary)]" checked={e.includeRecommendation} onChange={(ev) => upd({ includeRecommendation: ev.target.checked })} />
+                            <span>Incluir mi recomendación: <em className="text-muted-foreground">«{c.recommendation.length > 120 ? `${c.recommendation.slice(0, 120)}…` : c.recommendation}»</em></span>
                           </label>
                         ) : null}
                         <label className="flex flex-wrap items-center gap-2 text-sm">

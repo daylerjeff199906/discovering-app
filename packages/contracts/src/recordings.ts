@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { geoPointSchema, isoInstantSchema, timezoneSchema, uuidSchema } from "./common";
+import { geoPointSchema, isoInstantSchema, timezoneSchema, transportModeSchema, uuidSchema } from "./common";
 import { placeSnapshotSchema } from "./places";
 import { assetDtoSchema } from "./media";
 
@@ -14,6 +14,12 @@ export const visitDtoSchema = z.object({
   endedAt: z.string().nullable(),
   timezone: z.string(),
   note: z.string().nullable(),
+  /** Gasto opcional (unidad menor + moneda ISO). Privado: nunca se publica. */
+  expenseMinor: z.number().int().nullable(),
+  expenseCurrency: z.string().nullable(),
+  transportMode: transportModeSchema.nullable(),
+  /** Consejo para quien visite el lugar; solo se publica si el autor lo elige. */
+  recommendation: z.string().nullable(),
   media: z.array(assetDtoSchema),
   version: z.number().int(),
   clientMutationId: z.string(),
@@ -28,6 +34,22 @@ const newPlaceSchema = geoPointSchema.extend({
   countryCode: z.string().length(2).nullable().optional(),
 });
 
+/** Campos opcionales de una visita. El gasto exige monto Y moneda a la vez (o ninguno). */
+const visitExtrasShape = {
+  expenseMinor: z.number().int().min(0).max(100_000_000_000).nullable().optional(),
+  expenseCurrency: z
+    .string()
+    .trim()
+    .length(3)
+    .transform((v) => v.toUpperCase())
+    .nullable()
+    .optional(),
+  transportMode: transportModeSchema.nullable().optional(),
+  recommendation: z.string().trim().max(1000).nullable().optional(),
+};
+const expensePaired = (v: { expenseMinor?: number | null; expenseCurrency?: string | null }) => (v.expenseMinor == null) === (v.expenseCurrency == null);
+const expensePairedMessage = { path: ["expenseMinor"], message: "Indica el monto y la moneda del gasto" };
+
 export const createVisitInputSchema = z
   .object({
     clientMutationId: z.string().min(8).max(64),
@@ -37,19 +59,24 @@ export const createVisitInputSchema = z
     visitedAt: isoInstantSchema,
     timezone: timezoneSchema,
     note: z.string().trim().max(4000).nullable().optional(),
+    ...visitExtrasShape,
     /** Permite añadir una visita pasada a un recorrido ya finalizado (edición explícita). */
     retroactive: z.boolean().optional(),
   })
-  .refine((v) => Boolean(v.placeId) !== Boolean(v.newPlace), { path: ["placeId"], message: "Indica un lugar existente o uno nuevo" });
+  .refine((v) => Boolean(v.placeId) !== Boolean(v.newPlace), { path: ["placeId"], message: "Indica un lugar existente o uno nuevo" })
+  .refine(expensePaired, expensePairedMessage);
 export type CreateVisitInput = z.infer<typeof createVisitInputSchema>;
 
-export const updateVisitInputSchema = z.object({
-  visitedAt: isoInstantSchema.optional(),
-  endedAt: isoInstantSchema.nullable().optional(),
-  timezone: timezoneSchema.optional(),
-  note: z.string().trim().max(4000).nullable().optional(),
-  expectedVersion: z.number().int().min(1),
-});
+export const updateVisitInputSchema = z
+  .object({
+    visitedAt: isoInstantSchema.optional(),
+    endedAt: isoInstantSchema.nullable().optional(),
+    timezone: timezoneSchema.optional(),
+    note: z.string().trim().max(4000).nullable().optional(),
+    ...visitExtrasShape,
+    expectedVersion: z.number().int().min(1),
+  })
+  .refine(expensePaired, expensePairedMessage);
 export type UpdateVisitInput = z.infer<typeof updateVisitInputSchema>;
 
 export const trackPointInputSchema = z.object({

@@ -21,7 +21,6 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
   // Viaje automático (Iquitos) con propuesta aplicada
   await page.getByRole("link", { name: "Nuevo viaje" }).first().click();
   await page.getByText("Armar automáticamente").click();
-  await page.getByRole("textbox", { name: "¿A dónde te gustaría ir?" }).fill("Iquitos");
   await page.getByRole("button", { name: "Crear viaje" }).click();
   await page.waitForURL(/\/editar/);
   await page.getByRole("button", { name: "Armar propuesta automática" }).click();
@@ -36,10 +35,11 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
   // Recorrido + una visita con foto
   await page.getByRole("button", { name: "Iniciar recorrido" }).click();
   await page.waitForURL(/\/recorrido/);
+  await page.getByRole("button", { name: "Iniciar recorrido" }).click(); // pantalla «Comenzar aventura»
   await page.getByRole("button", { name: "Confirmar visita" }).first().click();
   await expect(page.getByText(/registrada\./)).toBeVisible();
   await page.getByRole("link", { name: "Fotos y nota" }).first().click();
-  await page.locator("#photo-input").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: await makeJpeg(1200, 800) });
+  await page.getByLabel("Elegir fotos de la visita").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: await makeJpeg(1200, 800) });
   await expect(page.getByText("Lista ✓")).toBeVisible({ timeout: 60_000 });
   const visitUrl = page.url();
 
@@ -76,7 +76,7 @@ test("pantallas privadas: sin desbordamiento y con capturas (móvil 390 y escrit
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/app/viajes/${journeyId}/recorrido`);
   await page.getByRole("button", { name: "Finalizar", exact: true }).click();
-  await page.getByRole("button", { name: "Finalizar y guardar" }).click();
+  await page.getByRole("button", { name: "Guardar recorrido" }).click();
   await expect(page.getByText("¡Recorrido finalizado!")).toBeVisible();
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });

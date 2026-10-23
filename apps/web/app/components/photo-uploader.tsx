@@ -1,9 +1,12 @@
 import type { AssetDto } from "@por-aqui/contracts";
 import { uploadToStorage } from "@por-aqui/api-client";
 import { Alert, Button, Lightbox, ProgressBar } from "@por-aqui/ui";
+import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, Plus, Upload as UploadIcon, RotateCcw, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { Camera, GripVertical, Plus, Upload as UploadIcon, RotateCcw, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { capabilitiesQuery } from "../lib/query";
 
@@ -28,6 +31,25 @@ const FAIL_TEXT: Record<string, string> = {
 };
 const NOT_RETRYABLE = new Set(["UNSUPPORTED_FORMAT", "TOO_LARGE", "TOO_MANY_PIXELS", "UPLOAD_EXPIRED"]);
 
+
+/** Miniatura arrastrable (ratón/táctil sobre toda la tarjeta; teclado desde el asa: Espacio, flechas, Espacio). */
+function SortablePhoto({ asset, index, disabled, onOpen, onRemove }: { asset: AssetDto; index: number; disabled?: boolean; onOpen: () => void; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: asset.id, disabled });
+  return (
+    <li ref={setNodeRef} {...listeners} style={{ transform: CSS.Translate.toString(transform), transition }} className={isDragging ? "is-dragging" : undefined}>
+      <button type="button" className="visit-photo-preview" onClick={onOpen} aria-label={"Ver foto " + (index + 1)}>
+        <img src={asset.thumbUrl!} alt={asset.caption ?? "Foto " + (index + 1)} width={160} height={145} draggable={false} />
+      </button>
+      <button type="button" ref={setActivatorNodeRef} {...attributes} className="visit-photo-grip" disabled={disabled} aria-label={"Mover foto " + (index + 1)} title="Arrastra para cambiar el orden">
+        <GripVertical size={15} aria-hidden="true" />
+      </button>
+      <button type="button" className="visit-photo-del" disabled={disabled} aria-label={"Eliminar foto " + (index + 1)} title="Eliminar foto" onClick={onRemove}>
+        <Trash2 size={15} aria-hidden="true" />
+      </button>
+    </li>
+  );
+}
+
 /** Subida directa al almacenamiento con progreso y error POR ARCHIVO, y estado de procesamiento. */
 export function PhotoUploader({ visitId, assets, onChanged, disabled }: { visitId: string; assets: AssetDto[]; onChanged: () => void; disabled?: boolean }) {
   const caps = useQuery(capabilitiesQuery());
@@ -37,6 +59,13 @@ export function PhotoUploader({ visitId, assets, onChanged, disabled }: { visitI
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [orderOverride, setOrderOverride] = useState<string[] | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
   const patch = (key: string, p: Partial<Upload>) => setUploads((u) => u.map((x) => (x.key === key ? { ...x, ...p } : x)));
 
   const run = async (up: Upload) => {
@@ -92,19 +121,46 @@ export function PhotoUploader({ visitId, assets, onChanged, disabled }: { visitI
     }
   };
 
-  const ready = assets.filter((a) => a.status === "READY");
+  const readyServer = assets.filter((a) => a.status === "READY");
+  const ready = orderOverride ? [...readyServer].sort((a, b) => orderOverride.indexOf(a.id) - orderOverride.indexOf(b.id)) : readyServer;
+  // Cuando llega el orden del servidor, deja de usarse el orden optimista.
+  const serverOrder = assets.map((a) => `${a.id}:${a.position}`).join();
+  useEffect(() => setOrderOverride(null), [serverOrder]);
+  const onDragEnd = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = ready.map((a) => a.id);
+    const next = arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id)));
+    setOrderOverride(next);
+    setOrderError(null);
+    try {
+      // La API exige el conjunto completo: las fotos aún en proceso o con error van al final.
+      await api.media.reorder(visitId, [...next, ...assets.filter((a) => a.status !== "READY").map((a) => a.id)]);
+      onChanged();
+    } catch (err) {
+      setOrderError(errorMessage(err, "No pudimos guardar el nuevo orden."));
+      setOrderOverride(null);
+    }
+  };
   const failed = assets.filter((a) => a.status === "FAILED");
   const shownKeys = new Set(uploads.filter((u) => u.phase !== "done").map((u) => u.assetId));
   const images = ready.map((a) => ({ src: a.displayUrl!, alt: a.caption ?? "Foto de la visita", caption: a.caption }));
 
   return (
-    <section aria-labelledby="fotos" className="visit-photo-component flex flex-col gap-3">
-      <div className="visit-photo-heading"><h2 id="fotos">Fotos de tu visita</h2><span>{ready.length} de {caps.data?.media.maxPerVisit ?? 20}</span></div>
+    <section aria-labelledby="fotos" className="visit-section visit-photo-component flex flex-col gap-3">
+      <div className="visit-photo-heading"><h2 id="fotos" className="visit-section-title">Multimedia</h2><span>{ready.length} de {caps.data?.media.maxPerVisit ?? 20}</span></div>
       <input ref={input} type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Elegir fotos de la visita" tabIndex={-1} onChange={(e) => { add(e.target.files); e.target.value = ""; }} disabled={disabled} />
       <input ref={camera} type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Tomar foto de la visita" tabIndex={-1} disabled={disabled} onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
-      <ul className="visit-photo-strip">{ready.map((asset,i) => <li key={asset.id}><button type="button" className="visit-photo-preview" onClick={() => setLightbox(i)} aria-label={'Ver foto ' + (i + 1)}><img src={asset.thumbUrl!} alt={asset.caption ?? 'Foto ' + (i + 1)} width={160} height={145} /></button><button type="button" disabled={disabled} aria-label={'Eliminar foto ' + (i + 1)} title="Eliminar foto" onClick={() => void remove(asset)}><Trash2 size={15} aria-hidden="true" /></button></li>)}
-        {ready.length < (caps.data?.media.maxPerVisit ?? 20) ? <li><button type="button" className="visit-photo-add" aria-label="Añadir fotos" disabled={disabled} onClick={() => input.current?.click()}><Plus size={28} strokeWidth={1.3} aria-hidden="true" /></button></li> : null}
-      </ul>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => void onDragEnd(e)}>
+        <SortableContext items={ready.map((a) => a.id)} strategy={rectSortingStrategy}>
+          <ul className="visit-photo-strip">
+            {ready.map((asset, i) => <SortablePhoto key={asset.id} asset={asset} index={i} disabled={disabled} onOpen={() => setLightbox(i)} onRemove={() => void remove(asset)} />)}
+            {ready.length < (caps.data?.media.maxPerVisit ?? 20) ? <li><button type="button" className="visit-photo-add" aria-label="Añadir fotos" disabled={disabled} onClick={() => input.current?.click()}><Plus size={28} strokeWidth={1.3} aria-hidden="true" /></button></li> : null}
+          </ul>
+        </SortableContext>
+      </DndContext>
+      {ready.length > 1 ? <p className="text-xs text-muted-foreground">Arrastra las fotos para cambiar el orden (con teclado: enfoca «Mover foto», Espacio y flechas).</p> : null}
+      {orderError ? <Alert tone="warning" live="assertive">{orderError}</Alert> : null}
       <div className="visit-photo-buttons"><Button variant="secondary" disabled={disabled} onClick={() => camera.current?.click()}><Camera size={18} aria-hidden="true" />Tomar foto</Button><Button variant="outline" disabled={disabled} onClick={() => input.current?.click()}><UploadIcon size={18} aria-hidden="true" />Subir fotos</Button></div>
       <p className="text-xs text-muted-foreground">JPEG, PNG o WebP · hasta {Math.round((caps.data?.media.maxBytes ?? 10485760) / 1048576)} MB por foto.</p>
       {uploads.length > 0 ? (

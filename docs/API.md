@@ -65,3 +65,7 @@ Documentación interactiva: `http://localhost:4000/api/docs` (OpenAPI generado a
 ## Seguridad de lectura pública
 
 La API pública devuelve DTO explícitos (`PublicRouteDto`, `PublicRouteCard`, `PublicProfileDto`) leídos **solo** de las tablas de publicación (`publication_*`): jamás serializa un `Journey` ni sus relaciones privadas. Las historias por enlace no repiten el token en el DTO y sus fotos usan tickets de vida corta; la capa web las sirve con `noindex`, `no-store` y `Referrer-Policy: no-referrer`.
+
+### Campos opcionales de visita
+`POST /recordings/:id/visits` y `PATCH /visits/:id` aceptan `expenseMinor` + `expenseCurrency` (ambos o ninguno), `transportMode` y `recommendation`. `PUT /journeys/:id/publication` acepta por entrada `includeRecommendation` (por defecto `false`). El DTO público **nunca** incluye gasto ni transporte.
+

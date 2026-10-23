@@ -327,6 +327,13 @@ export const visits = pgTable(
     endedAt: ts("ended_at"),
     timezone: text("timezone").notNull(),
     note: text("note"),
+    /** Gasto opcional en unidad menor (céntimos) + moneda ISO. Siempre privado: nunca se publica. */
+    expenseMinor: integer("expense_minor"),
+    expenseCurrency: text("expense_currency"),
+    /** Cómo llegó a este lugar (opcional, privado). */
+    transportMode: text("transport_mode"),
+    /** Consejo para quien visite el lugar (opcional; se publica solo si el autor lo elige). */
+    recommendation: text("recommendation"),
     placeSnapshotJson: jsonb("place_snapshot_json").notNull(),
     clientMutationId: text("client_mutation_id").notNull(),
     version: integer("version").notNull().default(1),
@@ -342,6 +349,8 @@ export const visits = pgTable(
     index("visits_recording_time_idx").on(t.recordingId, t.visitedAt, t.id),
     index("visits_place_idx").on(t.placeId),
     check("visits_end_chk", sql`${t.endedAt} is null or ${t.endedAt} >= ${t.visitedAt}`),
+    check("visits_expense_chk", sql`(${t.expenseMinor} is null and ${t.expenseCurrency} is null) or (${t.expenseMinor} >= 0 and ${t.expenseCurrency} ~ '^[A-Z]{3}$')`),
+    check("visits_transport_chk", sql`${t.transportMode} is null or ${t.transportMode} in ('WALK','BIKE','CAR','TRANSIT','BOAT','FLIGHT','OTHER')`),
   ],
 );
 
@@ -509,6 +518,7 @@ export const publicationEntries = pgTable(
     publicLocation: geometryPoint("public_location"),
     locationPrecision: text("location_precision").notNull(),
     note: text("note"),
+    recommendation: text("recommendation"),
     visitedLocalDate: date("visited_local_date", { mode: "string" }),
     catalogPlaceId: uuid("catalog_place_id").references(() => places.id, { onDelete: "set null" }),
   },

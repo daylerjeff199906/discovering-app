@@ -168,6 +168,10 @@ export class RecordingsService {
       endedAt: v.endedAt?.toISOString() ?? null,
       timezone: v.timezone,
       note: v.note,
+      expenseMinor: v.expenseMinor,
+      expenseCurrency: v.expenseCurrency,
+      transportMode: (v.transportMode as VisitDto["transportMode"]) ?? null,
+      recommendation: v.recommendation,
       media: media.get(v.id) ?? [],
       version: v.version,
       clientMutationId: v.clientMutationId,
@@ -208,6 +212,10 @@ export class RecordingsService {
             visitedAt,
             timezone: input.timezone,
             note: input.note ?? null,
+            expenseMinor: input.expenseMinor ?? null,
+            expenseCurrency: input.expenseCurrency ?? null,
+            transportMode: input.transportMode ?? null,
+            recommendation: input.recommendation?.trim() ? input.recommendation.trim() : null,
             placeSnapshotJson: placeSnapshot(place),
             clientMutationId: input.clientMutationId,
           })
@@ -254,6 +262,12 @@ export class RecordingsService {
     if (input.endedAt !== undefined) patch.endedAt = input.endedAt ? new Date(input.endedAt) : null;
     if (input.timezone) patch.timezone = input.timezone;
     if (input.note !== undefined) patch.note = input.note === "" ? null : input.note;
+    if (input.expenseMinor !== undefined || input.expenseCurrency !== undefined) {
+      patch.expenseMinor = input.expenseMinor ?? null;
+      patch.expenseCurrency = input.expenseMinor == null ? null : (input.expenseCurrency ?? null);
+    }
+    if (input.transportMode !== undefined) patch.transportMode = input.transportMode;
+    if (input.recommendation !== undefined) patch.recommendation = input.recommendation?.trim() ? input.recommendation.trim() : null;
     const updated = await this.db
       .update(visits)
       .set({ ...patch, version: sql`${visits.version} + 1` })

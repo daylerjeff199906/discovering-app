@@ -86,6 +86,28 @@ describe("Visitas", () => {
     expect((await u.client.get(`/visits/${v.id}`)).status).toBe(404);
   });
 
+  it("guarda gasto, transporte y recomendación opcionales; el gasto exige monto y moneda", async () => {
+    const u = await newUser(t);
+    const { rec, places } = await started(u);
+    const base = { placeId: places[0]!.id, visitedAt: nowIso(), timezone: "America/Lima" };
+    const plain = await u.client.post(`/recordings/${rec.id}/visits`, { clientMutationId: randomUUID(), ...base });
+    expect(plain.status).toBe(201);
+    expect(plain.body).toMatchObject({ expenseMinor: null, expenseCurrency: null, transportMode: null, recommendation: null });
+
+    const full = await u.client.post(`/recordings/${rec.id}/visits`, { clientMutationId: randomUUID(), ...base, expenseMinor: 1250, expenseCurrency: "pen", transportMode: "WALK", recommendation: "  Ve temprano  " });
+    expect(full.status).toBe(201);
+    expect(full.body).toMatchObject({ expenseMinor: 1250, expenseCurrency: "PEN", transportMode: "WALK", recommendation: "Ve temprano" });
+
+    const half = await u.client.post(`/recordings/${rec.id}/visits`, { clientMutationId: randomUUID(), ...base, expenseMinor: 500 });
+    expect(half.status).toBe(400);
+    const negative = await u.client.post(`/recordings/${rec.id}/visits`, { clientMutationId: randomUUID(), ...base, expenseMinor: -1, expenseCurrency: "PEN" });
+    expect(negative.status).toBe(400);
+
+    const upd = await u.client.patch(`/visits/${full.body.id}`, { expenseMinor: null, expenseCurrency: null, recommendation: null, expectedVersion: full.body.version });
+    expect(upd.status).toBe(200);
+    expect(upd.body).toMatchObject({ expenseMinor: null, expenseCurrency: null, recommendation: null, transportMode: "WALK" });
+  });
+
   it("rechaza fechas futuras", async () => {
     const u = await newUser(t);
     const { rec, places } = await started(u);
