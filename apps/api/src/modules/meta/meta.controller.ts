@@ -34,6 +34,7 @@ export class MetaController {
       media: { maxBytes: this.env.MEDIA_MAX_BYTES, maxPerVisit: this.env.MEDIA_MAX_PER_VISIT, mimeTypes: ["image/jpeg", "image/png", "image/webp"] },
       auth: { google: Boolean(this.env.GOOGLE_CLIENT_ID && this.env.GOOGLE_CLIENT_SECRET) },
       track: { maxAccuracyM: this.env.TRACK_MAX_ACCURACY_M, minDistanceM: this.env.TRACK_MIN_DISTANCE_M },
+      import: { maxBytes: this.env.IMPORT_MAX_BYTES, maxPoints: this.env.IMPORT_MAX_POINTS, maxWaypoints: this.env.IMPORT_MAX_WAYPOINTS },
     };
   }
 

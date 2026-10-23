@@ -1,6 +1,6 @@
 import { Alert, Button, Field, Input, cn } from "@por-aqui/ui";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileUp } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { api, errorMessage } from "../lib/api";
@@ -69,6 +69,7 @@ export default function NuevoViaje() {
       {create.isError ? <Alert tone="danger" live="assertive" className="mb-4">{errorMessage(create.error)}</Alert> : null}
       <Button type="submit" className="w-full" disabled={!selectedCity} loading={create.isPending}>{mode === "libre" ? "Continuar mi aventura" : "Crear viaje"}<ArrowRight size={18} aria-hidden="true" /></Button>
     </form>
+    <p className="adventure-note import-link"><FileUp size={18} aria-hidden="true" /><span>¿Ya hiciste el recorrido? <Link to="/app/viajes/importar" className="underline">Importar un recorrido</Link> desde un archivo GPX, KML o de Google Takeout.</span></p>
     <DestinationPicker open={pickerOpen} onClose={() => setPickerOpen(false)} selected={selectedCity?.id} onSelect={(c) => setDestination(c.name)} />
   </section>;
 }

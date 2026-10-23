@@ -44,6 +44,8 @@ export interface ClientOptions {
 export interface RequestOptions {
   query?: Record<string, string | number | boolean | undefined | null>;
   body?: unknown;
+  /** Cuerpo multipart (subida de archivos). El navegador fija el Content-Type con su boundary. */
+  form?: FormData;
   signal?: AbortSignal;
   headers?: Record<string, string>;
 }
@@ -88,7 +90,7 @@ export class HttpClient {
     for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
 
     const headers: Record<string, string> = { Accept: "application/json", ...(this.extraHeaders?.() ?? {}), ...(opts.headers ?? {}) };
-    if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+    if (opts.body !== undefined && !opts.form) headers["Content-Type"] = "application/json";
     if (UNSAFE.has(method)) {
       const token = await this.csrfToken();
       if (token) headers["X-CSRF-Token"] = token;
@@ -99,7 +101,7 @@ export class HttpClient {
       res = await this.fetchImpl(this.base ? url.toString() : `${url.pathname}${url.search}`, {
         method,
         headers,
-        body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+        body: opts.form ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
         credentials: "include",
         signal: opts.signal,
       });
@@ -123,6 +125,7 @@ export class HttpClient {
 
   get = <T>(path: string, o?: RequestOptions) => this.request<T>("GET", path, o);
   post = <T>(path: string, body?: unknown, o?: RequestOptions) => this.request<T>("POST", path, { ...o, body: body ?? {} });
+  postForm = <T>(path: string, form: FormData, o?: RequestOptions) => this.request<T>("POST", path, { ...o, form });
   put = <T>(path: string, body?: unknown, o?: RequestOptions) => this.request<T>("PUT", path, { ...o, body: body ?? {} });
   patch = <T>(path: string, body?: unknown, o?: RequestOptions) => this.request<T>("PATCH", path, { ...o, body: body ?? {} });
   delete = <T>(path: string, o?: RequestOptions) => this.request<T>("DELETE", path, o);

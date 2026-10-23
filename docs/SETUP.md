@@ -69,6 +69,16 @@ Cómo se comporta (OpenID Connect con código + PKCE, `state` y `nonce`; el secr
 - **Cuentas creadas con Google** no tienen contraseña conocida: para usar el formulario de correo o para eliminar la cuenta, primero usa «¿Olvidaste tu contraseña?».
 - Esto no sincroniza Google Maps: Google no ofrece una API para leer tu Timeline ni tus listas guardadas (el Timeline ahora vive solo en el dispositivo). La vía realista es importar archivos (GPX/KML o la exportación de Google Takeout).
 
+### Importar recorridos (GPX, KML, Takeout)
+
+No requiere claves ni proveedores: la persona sube un archivo desde **Nuevo viaje → Importar un recorrido**. Variables opcionales: `IMPORT_MAX_BYTES` (10 MB), `IMPORT_MAX_POINTS` (50 000) e `IMPORT_MAX_WAYPOINTS` (1 000); el filtrado por precisión y distancia reutiliza `TRACK_MAX_ACCURACY_M` y `TRACK_MIN_DISTANCE_M`. Cómo obtener los archivos de Google (descargar en [takeout.google.com](https://takeout.google.com) y descomprimir el ZIP):
+
+- **Timeline**: «Cronología» / «Location History» → JSON (`Semantic Location History/2026/2026_MARCH.json`, `Records.json` o `Timeline.json`). Desde 2024 el Timeline vive en el dispositivo, no en Takeout: expórtalo desde la app de Google Maps del teléfono («Exportar datos de la cronología» en los ajustes de la cronología).
+- **Lugares guardados**: «Maps (tus lugares)» → `Saved Places.json` (trae coordenadas) o los CSV de cada lista (suelen traer solo el enlace; se importan los que incluyen coordenadas).
+- **GPX / KML**: Strava, Komoot, Garmin, Google Earth o «Mis mapas» (Exportar a KML).
+
+Detalles de formatos, reglas y errores: [API.md](API.md#importar-recorridos-gpx-kml-google-takeout).
+
 ### Mapas
 
 Por omisión se usan tiles raster de OpenStreetMap solo para desarrollo (su política de uso no admite tráfico de producción). Configura `VITE_MAP_TILES_URL` con un proveedor propio o autohospedado.

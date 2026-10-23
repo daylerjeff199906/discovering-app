@@ -78,6 +78,14 @@ export class Client {
     for (const [k, v] of Object.entries(headers)) r = r.set(k, v);
     return this.wrap(await (body === undefined ? r : r.send(body as object)));
   }
+  /** POST multipart/form-data con un archivo en el campo `file` (importación de recorridos). */
+  async upload(path: string, file?: { name: string; data: Buffer | string }, fields: Record<string, string> = {}): Promise<Res> {
+    await this.ensureCsrf();
+    let r = this.agent.post(`/api/v1${path}`).set("x-csrf-token", this.csrf).set("origin", "http://localhost:5173");
+    for (const [k, v] of Object.entries(fields)) r = r.field(k, v);
+    if (file) r = r.attach("file", Buffer.from(file.data), file.name);
+    return this.wrap(await r);
+  }
   post = (p: string, b?: unknown, h?: Record<string, string>) => this.send("post", p, b ?? {}, h);
   put = (p: string, b?: unknown) => this.send("put", p, b ?? {});
   patch = (p: string, b?: unknown) => this.send("patch", p, b ?? {});

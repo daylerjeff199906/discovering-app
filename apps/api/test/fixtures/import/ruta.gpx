@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="prueba" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Paseo por el malecón</name></metadata>
+  <wpt lat="-3.7437" lon="-73.2455">
+    <time>2026-03-14T14:10:00Z</time>
+    <name>Plaza de Armas</name>
+    <desc>Café &amp; descanso</desc>
+  </wpt>
+  <wpt lat="-3.7420" lon="-73.2430"><name>Mirador del Amazonas</name></wpt>
+  <trk>
+    <name>Malecón Tarapacá</name>
+    <trkseg>
+      <trkpt lat="-3.74370" lon="-73.24550"><ele>100</ele><time>2026-03-14T14:00:00Z</time></trkpt>
+      <trkpt lat="-3.74370" lon="-73.24550"><time>2026-03-14T14:00:05Z</time></trkpt>
+      <trkpt lat="-3.74330" lon="-73.24500"><time>2026-03-14T14:01:00Z</time></trkpt>
+      <trkpt lat="-3.74290" lon="-73.24450"><time>2026-03-14T14:02:00Z</time></trkpt>
+    </trkseg>
+    <trkseg>
+      <trkpt lat="-3.74200" lon="-73.24300"><time>2026-03-14T14:20:00Z</time></trkpt>
+      <trkpt lat="-3.74150" lon="-73.24250"><time>2026-03-14T14:21:00Z</time></trkpt>
+      <trkpt lat="abc" lon="-73.24200"><time>2026-03-14T14:22:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

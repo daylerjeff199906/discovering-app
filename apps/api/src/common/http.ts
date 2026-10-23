@@ -41,8 +41,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       body = { code: exception.code, message: exception.message, fieldErrors: exception.fieldErrors, details: exception.details, requestId };
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const code = status === 404 ? ERROR_CODES.NOT_FOUND : status === 401 ? ERROR_CODES.UNAUTHENTICATED : status === 403 ? ERROR_CODES.FORBIDDEN : status === 413 ? "PAYLOAD_TOO_LARGE" : "HTTP_ERROR";
-      const message = status === 404 ? "No encontramos lo que buscas." : status === 413 ? "La solicitud es demasiado grande." : status < 500 ? exception.message : body.message;
+      // multer (importación de archivos) responde 413 "File too large" al pasar el tope de tamaño.
+      const tooLargeFile = status === 413 && exception.message === "File too large";
+      const code = tooLargeFile ? "IMPORT_TOO_LARGE" : status === 404 ? ERROR_CODES.NOT_FOUND : status === 401 ? ERROR_CODES.UNAUTHENTICATED : status === 403 ? ERROR_CODES.FORBIDDEN : status === 413 ? "PAYLOAD_TOO_LARGE" : "HTTP_ERROR";
+      const message = status === 404 ? "No encontramos lo que buscas." : tooLargeFile ? "El archivo supera el tamaño máximo permitido." : status === 413 ? "La solicitud es demasiado grande." : status < 500 ? exception.message : body.message;
       body = { code, message, requestId };
     } else {
       const e = exception as { code?: string; type?: string; status?: number };

@@ -8,5 +8,6 @@ export const capabilitiesDtoSchema = z.object({
   media: z.object({ maxBytes: z.number().int(), maxPerVisit: z.number().int(), mimeTypes: z.array(z.string()) }),
   auth: z.object({ google: z.boolean() }),
   track: z.object({ maxAccuracyM: z.number(), minDistanceM: z.number() }),
+  import: z.object({ maxBytes: z.number().int(), maxPoints: z.number().int(), maxWaypoints: z.number().int() }),
 });
 export type CapabilitiesDto = z.infer<typeof capabilitiesDtoSchema>;

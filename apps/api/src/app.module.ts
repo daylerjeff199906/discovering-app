@@ -5,6 +5,7 @@ import { AllExceptionsFilter, RequestLogInterceptor, requestContext } from "./co
 import { ConfigModule } from "./config/config.module";
 import { InfrastructureModule } from "./infrastructure/infrastructure.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { ImportsModule } from "./modules/imports/imports.module";
 import { JourneysModule } from "./modules/journeys/journeys.module";
 import { MediaModule } from "./modules/media/media.module";
 import { MetaModule } from "./modules/meta/meta.module";
@@ -19,7 +20,7 @@ export class AppModule implements NestModule {
   static forRoot(overrides: Record<string, string> = {}): DynamicModule {
     return {
       module: AppModule,
-      imports: [ConfigModule.forRoot(overrides), InfrastructureModule, AuthModule, UsersModule, MetaModule, PlacesModule, JourneysModule, RecordingsModule, MediaModule, PublicationsModule],
+      imports: [ConfigModule.forRoot(overrides), InfrastructureModule, AuthModule, UsersModule, MetaModule, PlacesModule, ImportsModule, JourneysModule, RecordingsModule, MediaModule, PublicationsModule],
       providers: [
         // Orden: CSRF → sesión (denegado por omisión salvo @Public) → límite de peticiones.
         { provide: APP_GUARD, useClass: CsrfGuard },

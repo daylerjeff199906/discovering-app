@@ -1,0 +1,9 @@
+{
+  "locations": [
+    { "latitudeE7": -37437000, "longitudeE7": -732455000, "accuracy": 12, "timestamp": "2026-03-14T14:00:00.000Z" },
+    { "latitudeE7": -37433000, "longitudeE7": -732450000, "accuracy": 10, "timestamp": "2026-03-14T14:05:00.000Z" },
+    { "latitudeE7": -37429000, "longitudeE7": -732445000, "accuracy": 8, "timestamp": "2026-03-14T14:10:00.000Z" },
+    { "latitudeE7": -37400000, "longitudeE7": -732400000, "accuracy": 8, "timestamp": "2026-03-14T18:00:00.000Z" },
+    { "latitudeE7": -37395000, "longitudeE7": -732390000, "accuracy": 8, "timestamp": "2026-03-14T18:05:00.000Z" }
+  ]
+}

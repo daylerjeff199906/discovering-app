@@ -13,7 +13,7 @@ Documentación interactiva: `http://localhost:4000/api/docs` (OpenAPI generado a
 { "code": "VALIDATION_ERROR", "message": "Revisa los campos marcados.", "fieldErrors": { "email": ["Correo inválido"] }, "requestId": "…" }
 ```
 
-  Códigos estables: `VALIDATION_ERROR`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `VERSION_CONFLICT` (409, con `details.currentVersion`), `EMAIL_NOT_VERIFIED`, `INVALID_CREDENTIALS`, `RATE_LIMITED` (429 + `Retry-After`), `CSRF_INVALID`, `TOKEN_INVALID`/`TOKEN_EXPIRED`, `RECORDING_CLOSED`, `PENDING_TRACK_DATA`, `MEDIA_IN_PUBLICATION`, `MEDIA_LIMIT`, `UNSUPPORTED_MEDIA`, `NOT_AVAILABLE`.
+  Códigos estables: `VALIDATION_ERROR`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `VERSION_CONFLICT` (409, con `details.currentVersion`), `EMAIL_NOT_VERIFIED`, `INVALID_CREDENTIALS`, `RATE_LIMITED` (429 + `Retry-After`), `CSRF_INVALID`, `TOKEN_INVALID`/`TOKEN_EXPIRED`, `RECORDING_CLOSED`, `PENDING_TRACK_DATA`, `IMPORT_*` (ver «Importar recorridos»), `MEDIA_IN_PUBLICATION`, `MEDIA_LIMIT`, `UNSUPPORTED_MEDIA`, `NOT_AVAILABLE`.
 - **Recursos ajenos**: 404 (no se revela su existencia). Un UUID nunca sustituye la autorización.
 - **Paginación** por cursor opaco (`cursor`, `limit` ≤ 50) con orden estable `(first_published_at desc, id desc)`.
 - Todas las respuestas llevan `Cache-Control: private, no-store` y `X-Request-Id`, salvo el contenido de medios.
@@ -31,6 +31,7 @@ Documentación interactiva: `http://localhost:4000/api/docs` (OpenAPI generado a
 | Ejecución | `GET /journeys/:id/recording`, `POST …/recording/start · pause · resume · finish` |
 | Visitas | `GET /journeys/:id/visits`, `GET·POST /recordings/:id/visits`, `GET·PATCH·DELETE /visits/:id` |
 | Trayecto | `POST /recordings/:id/track-batches`, `GET /recordings/:id/track` |
+| Importación | `POST /journeys/import/preview`, `POST /journeys/import` (multipart; ver «Importar recorridos») |
 | Medios | `POST /visits/:id/media/uploads`, `POST /media/:id/complete · retry`, `GET·PATCH·DELETE /media/:id`, `GET /media/:id/content` |
 | Publicación | `GET·PUT·DELETE /journeys/:id/publication`, `PUT /publications/:id/visibility`, `GET·POST·DELETE /publications/:id/share-links`, `POST /publications/:id/copy` |
 | Público | `GET /public/explore · routes/:slug · profiles/:username`, `GET /shared/:token` |
@@ -52,7 +53,7 @@ Documentación interactiva: `http://localhost:4000/api/docs` (OpenAPI generado a
 
 ## Límites de peticiones (Redis, ventana fija)
 
-`register` 10/h por IP · `login` 20/5 min por IP y por correo · `forgot-password` 10/h · `resend-verification` 10/h + cooldown 60 s por correo · `verify`/`reset` 20/10 min y 10/h · `uploads` 120/10 min · `reports` 10/h · `shared/:token` 120/min. Falla abierto (y registra) si Redis no responde.
+`register` 10/h por IP · `login` 20/5 min por IP y por correo · `forgot-password` 10/h · `resend-verification` 10/h + cooldown 60 s por correo · `verify`/`reset` 20/10 min y 10/h · `uploads` 120/10 min · `import` 60/10 min · `reports` 10/h · `shared/:token` 120/min. Falla abierto (y registra) si Redis no responde.
 
 ## Medios
 
@@ -69,3 +70,32 @@ La API pública devuelve DTO explícitos (`PublicRouteDto`, `PublicRouteCard`, `
 ### Campos opcionales de visita
 `POST /recordings/:id/visits` y `PATCH /visits/:id` aceptan `expenseMinor` + `expenseCurrency` (ambos o ninguno), `transportMode` y `recommendation`. `PUT /journeys/:id/publication` acepta por entrada `includeRecommendation` (por defecto `false`). El DTO público **nunca** incluye gasto ni transporte.
 
+## Importar recorridos (GPX, KML, Google Takeout)
+
+Google **no ofrece una API** para leer el Timeline ni las listas de Maps, así que "sincronizar" es **importar archivos** que la persona descarga. Dos endpoints, ambos `multipart/form-data` con el archivo en el campo `file` y requieren sesión + CSRF:
+
+| Endpoint | Efecto |
+|---|---|
+| `POST /journeys/import/preview` → 200 `ImportPreview` | Lee y filtra el archivo **sin guardar nada**: formato, puntos tras el filtrado, descartados, tramos, distancia, fechas, lugares (primeros 20), `bounds` y `warnings`. |
+| `POST /journeys/import` → 201 `ImportResult` | Crea un viaje libre (`FREE`) con ejecución `COMPLETED`, segmentos y puntos GPS (`track_segments`/`track_points`) y una visita por lugar, ligada a un lugar personal. Todo en una transacción: si algo falla no queda nada. |
+
+Campos de texto opcionales (mismos esquemas en `importOptionsSchema`): `title`, `timezone` (IANA; por defecto la del perfil), `importWaypoints` (`true`/`false`, por defecto `true`), `from` / `to` (instantes ISO que limitan lo importado; útil con Takeout) y `startAt` (inicio para archivos **sin fechas**).
+
+**Formatos** (se detectan por el contenido, no por la extensión ni el MIME):
+
+| Formato | Qué se importa |
+|---|---|
+| GPX | `<trk>/<trkseg>/<trkpt>` (un segmento por `trkseg`), `<rte>/<rtept>` (sin fechas) y `<wpt>` (lugares) |
+| KML | `LineString` y `gx:Track` (con `<when>`) como segmentos, `Point` como lugares; los polígonos se omiten con aviso |
+| Takeout · Timeline (JSON) | `timelineObjects` (Semantic Location History: `placeVisit`, `activitySegment`), `Records.json` (`locations`, se parte en segmentos con pausas > 30 min) y el Timeline del dispositivo (`semanticSegments` o arreglo con `visit`/`activity`/`timelinePath`) |
+| Takeout · Lugares guardados | GeoJSON (`Saved Places.json`) y CSV (`Title,Note,URL,…`). Las coordenadas salen de la geometría, de `Geo Coordinates` o del enlace de Maps; los lugares sin ubicación se omiten con aviso |
+
+**Reglas**
+
+- **Filtrado igual que la grabación**: se descartan puntos con precisión > `TRACK_MAX_ACCURACY_M`, con fecha futura (> 5 min) y los que distan menos de `TRACK_MIN_DISTANCE_M` del punto anterior del mismo segmento.
+- **Sin fechas** (p. ej. `LineString` de KML): se generan a razón de 1 s por punto desde `startAt` o, si falta, terminando en el momento de la importación; la vista previa avisa (`hasTimestamps: false`). Un segmento solo se considera con fechas si todos sus puntos las traen.
+- **Lugares**: cada waypoint se liga a un lugar personal del usuario con el mismo nombre (sin distinguir mayúsculas ni tildes) a menos de 75 m; si no existe se crea uno nuevo, privado. Los waypoints sin fecha se ordenan al inicio del recorrido respetando el orden del archivo. Las visitas llevan `clientMutationId = import-N`.
+- **Seguridad**: archivo en memoria (nunca a disco) con tope `IMPORT_MAX_BYTES`; el XML se lee con un lector propio que **rechaza `<!DOCTYPE>` y `<!ENTITY>`** (sin XXE ni expansión de entidades), limita profundidad (64) y nodos (1 M) y no carga recursos externos. Los ZIP y binarios se rechazan con un mensaje que pide descomprimir.
+- Límites configurables (`/meta/capabilities → import`): `IMPORT_MAX_BYTES` (10 MB), `IMPORT_MAX_POINTS` (50 000 puntos tras filtrar) e `IMPORT_MAX_WAYPOINTS` (1 000).
+
+**Errores** (`code`): `IMPORT_NO_FILE` (400), `IMPORT_TOO_LARGE` (413), `IMPORT_UNSUPPORTED_FORMAT`, `IMPORT_INVALID_FILE`, `IMPORT_EMPTY`, `IMPORT_TOO_MANY_POINTS`, `IMPORT_TOO_MANY_WAYPOINTS` (422) y `VALIDATION_ERROR` (400) para opciones inválidas. La web: **Nuevo viaje → Importar un recorrido** (`/app/viajes/importar`).

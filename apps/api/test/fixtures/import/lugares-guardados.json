@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.2455, -3.7437] },
+      "properties": { "Title": "Plaza de Armas", "Location": { "Business Name": "Plaza de Armas", "Address": "Iquitos", "Country Code": "PE" }, "Google Maps URL": "https://maps.google.com/?cid=1" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [0, 0] },
+      "properties": { "Title": "Sin coordenadas en geometría", "Location": { "Geo Coordinates": { "Latitude": "-3.7500", "Longitude": "-73.2500" } } }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [0, 0] },
+      "properties": { "Title": "Solo enlace", "Google Maps URL": "https://www.google.com/maps/place/Algo/@-3.7600,-73.2600,17z/data=!3m1" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [0, 0] },
+      "properties": { "Title": "Sin ubicación" }
+    }
+  ]
+}

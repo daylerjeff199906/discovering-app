@@ -11,6 +11,9 @@ import type {
   ExploreQuery,
   FinishRecordingInput,
   GeocodeResult,
+  ImportOptionsInput,
+  ImportPreview,
+  ImportResult,
   InterestDto,
   JourneyDto,
   JourneySummaryDto,
@@ -46,6 +49,14 @@ import type { HttpClient } from "./http";
 
 type Page<T> = { items: T[]; nextCursor: string | null };
 type Sig = { signal?: AbortSignal };
+
+/** Arma el multipart de la importación: el archivo y solo las opciones indicadas. */
+function importForm(file: File, opts: ImportOptionsInput): FormData {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(opts)) if (v !== undefined && v !== null && v !== "") form.append(k, String(v));
+  form.append("file", file, file.name);
+  return form;
+}
 export interface Destination {
   label: string;
   locality: string;
@@ -95,6 +106,11 @@ export function createApi(http: HttpClient) {
       destinations: (q?: string, o?: Sig) => http.get<Destination[]>("/places/destinations", { query: { q }, ...o }),
       create: (i: CreatePlaceInput) => http.post<PlaceDto>("/places", i),
       geocode: (q: string, o?: Sig) => http.get<GeocodeResult>("/places/geocode", { query: { q }, ...o }),
+    },
+    imports: {
+      /** Vista previa de un archivo GPX/KML/Takeout; no guarda nada. */
+      preview: (file: File, opts: ImportOptionsInput = {}, o?: Sig) => http.postForm<ImportPreview>("/journeys/import/preview", importForm(file, opts), o),
+      create: (file: File, opts: ImportOptionsInput = {}, o?: Sig) => http.postForm<ImportResult>("/journeys/import", importForm(file, opts), o),
     },
     journeys: {
       list: (q?: { includeArchived?: boolean }, o?: Sig) => http.get<JourneySummaryDto[]>("/journeys", { query: { includeArchived: q?.includeArchived ? "true" : undefined }, ...o }),

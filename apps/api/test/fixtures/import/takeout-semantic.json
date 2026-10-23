@@ -1,0 +1,37 @@
+{
+  "timelineObjects": [
+    {
+      "placeVisit": {
+        "location": { "latitudeE7": -37437000, "longitudeE7": -732455000, "name": "Plaza de Armas", "address": "Iquitos, Perú" },
+        "duration": { "startTimestamp": "2026-03-14T14:00:00.000Z", "endTimestamp": "2026-03-14T14:30:00.000Z" }
+      }
+    },
+    {
+      "activitySegment": {
+        "activityType": "WALKING",
+        "startLocation": { "latitudeE7": -37437000, "longitudeE7": -732455000 },
+        "endLocation": { "latitudeE7": -37420000, "longitudeE7": -732430000 },
+        "duration": { "startTimestamp": "2026-03-14T14:30:00.000Z", "endTimestamp": "2026-03-14T14:40:00.000Z" },
+        "waypointPath": { "waypoints": [ { "latE7": -37430000, "lngE7": -732445000 } ] }
+      }
+    },
+    {
+      "activitySegment": {
+        "startLocation": { "latitudeE7": -37420000, "longitudeE7": -732430000 },
+        "endLocation": { "latitudeE7": -37400000, "longitudeE7": -732400000 },
+        "duration": { "startTimestamp": "2026-03-14T14:45:00.000Z", "endTimestamp": "2026-03-14T14:55:00.000Z" },
+        "simplifiedRawPath": { "points": [
+          { "latE7": -37420000, "lngE7": -732430000, "timestamp": "2026-03-14T14:45:00.000Z", "accuracyMeters": 10 },
+          { "latE7": -37410000, "lngE7": -732415000, "timestamp": "2026-03-14T14:50:00.000Z", "accuracyMeters": 900 },
+          { "latE7": -37400000, "lngE7": -732400000, "timestamp": "2026-03-14T14:55:00.000Z", "accuracyMeters": 12 }
+        ] }
+      }
+    },
+    {
+      "placeVisit": {
+        "location": { "latitudeE7": -37400000, "longitudeE7": -732400000, "address": "Calle Lima 100, Iquitos" },
+        "duration": { "startTimestampMs": "1773500100000", "endTimestampMs": "1773503700000" }
+      }
+    }
+  ]
+}

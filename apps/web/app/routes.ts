@@ -29,6 +29,7 @@ export default [
     route("app/viajes", "routes/app.viajes.tsx"),
     route("app/guardados", "routes/app.guardados.tsx"),
     route("app/viajes/nuevo", "routes/app.viajes.nuevo.tsx"),
+    route("app/viajes/importar", "routes/app.viajes.importar.tsx"),
     route("app/viajes/:id/editar", "routes/app.viajes.$id.editar.tsx"),
     route("app/viajes/:id", "routes/app.viajes.$id.tsx"),
     route("app/viajes/:id/recorrido", "routes/app.viajes.$id.recorrido.tsx"),

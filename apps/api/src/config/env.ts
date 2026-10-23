@@ -67,6 +67,11 @@ export const envSchema = z
     ENABLE_DEMO_CONTENT: bool("false"),
     TRACK_MAX_ACCURACY_M: z.coerce.number().default(100),
     TRACK_MIN_DISTANCE_M: z.coerce.number().default(5),
+
+    // Importación de recorridos (GPX/KML/Takeout): archivo pequeño, con límites de puntos y de lugares.
+    IMPORT_MAX_BYTES: z.coerce.number().int().min(1024).default(10 * 1024 * 1024),
+    IMPORT_MAX_POINTS: z.coerce.number().int().min(1).default(50_000),
+    IMPORT_MAX_WAYPOINTS: z.coerce.number().int().min(0).default(1000),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV !== "production") return;
