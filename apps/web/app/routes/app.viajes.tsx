@@ -1,7 +1,7 @@
 import type { JourneyStatus, JourneySummaryDto } from "@por-aqui/contracts";
 import { Alert, Badge, Button, EmptyState, Tabs, buttonClass } from "@por-aqui/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, Copy, MapPin, MapPinned, Plus, ArrowUpRight, Play, Pencil, Eye } from "lucide-react";
+import { Archive, ArchiveRestore, Copy, MapPin, MapPinned, Plus, Play, Pencil, Eye } from "lucide-react";
 import { DeleteJourneyButton } from "../components/delete-journey-button";
 import { AmazonArt } from "../components/travel-art";
 import { useState } from "react";
@@ -46,7 +46,6 @@ export default function MisViajes() {
     <>
       <p className="eyebrow mb-2">Tu colección de caminos</p>
       <PageHeader title="Mis aventuras" subtitle="Las que sueñas, las que vives y las que siempre recordarás." actions={<Link to="/app/viajes/nuevo" className={buttonClass({})}><Plus className="size-5" aria-hidden="true" /> Nueva aventura</Link>} />
-      <Link to="/explorar" className="portal-inspiration"><span><span className="eyebrow">Ideas para tu próxima historia</span><strong>Descubre Iquitos en el portal</strong><span>Inspírate con lugares y recorridos para hacerlos tuyos.</span></span><ArrowUpRight aria-hidden="true" /></Link>
       <div className="journey-filters mb-6 overflow-x-auto pb-1">
         <Tabs className="journey-filter-tabs" label="Filtrar por estado" value={filter} onChange={(v) => setFilter(v as typeof filter)} tabs={FILTERS} />
       </div>

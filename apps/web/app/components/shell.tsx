@@ -121,6 +121,7 @@ function AccountPopover() {
       <nav aria-label="Opciones de usuario">
         <Link to="/app/inicio"><Home size={17} aria-hidden="true" /> Inicio</Link>
         <Link to="/app/viajes"><MapIcon size={17} aria-hidden="true" /> Mis aventuras</Link>
+        <Link to="/explorar"><Compass size={17} aria-hidden="true" /> Descubre Iquitos</Link>
         <Link to="/app/perfil"><UserIcon size={17} aria-hidden="true" /> Mi perfil</Link>
         <Link to="/app/cuenta"><Settings size={17} aria-hidden="true" /> Configuración de cuenta</Link>
         {me.role === "MODERATOR" ? <><Link to="/app/catalogo">Administrar catálogo</Link><Link to="/moderacion">Moderación</Link></> : null}
