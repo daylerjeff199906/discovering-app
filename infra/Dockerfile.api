@@ -5,7 +5,7 @@
 # Versiones fijadas (sin tags flotantes).
 FROM node:24.11.0-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
-RUN corepack enable && corepack prepare pnpm@11.12.0 --activate
+RUN npm install -g pnpm@12.8.1 && pnpm --version
 WORKDIR /repo
 
 # ── build: instala todo y compila contratos, base de datos y API ─────────────

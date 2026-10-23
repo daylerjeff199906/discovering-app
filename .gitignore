@@ -13,3 +13,4 @@ test-results
 .docker-*.log
 .api.log
 .dev-mail
+.env.bak-*

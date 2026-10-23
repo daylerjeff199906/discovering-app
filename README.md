@@ -62,6 +62,7 @@ El navegador usa **un solo origen** (`:5173`): Vite proxea `/api/*` hacia Nest, 
 | `pnpm test:e2e` | Playwright + Chrome instalado (necesita `pnpm infra:up` y el stack en :5173; recomendado `pnpm build` y `RATE_LIMIT_ENABLED=false pnpm preview`) |
 | `pnpm db:generate` | Genera una migración de Drizzle a partir de `schema.ts` |
 | `pnpm db:migrate` · `db:seed` · `db:reset` | Migrar · sembrar demostración · reiniciar la BD (solo desarrollo) |
+| `pnpm check:env` | Muestra qué credenciales (Cloudflare R2, Resend) faltan en `.env`, sin imprimir sus valores |
 | `pnpm infra:up` · `infra:down` | Levantar/bajar Docker Compose |
 
 ## Estructura

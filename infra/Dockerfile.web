@@ -3,7 +3,7 @@
 # Las variables VITE_* se fijan en la CONSTRUCCIÓN (son públicas): --build-arg VITE_MAP_TILES_URL=…
 FROM node:24.11.0-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
-RUN corepack enable && corepack prepare pnpm@11.12.0 --activate
+RUN npm install -g pnpm@12.8.1 && pnpm --version
 WORKDIR /repo
 
 FROM base AS build

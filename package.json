@@ -21,7 +21,8 @@
     "db:seed": "pnpm --filter @por-aqui/database db:seed",
     "db:reset": "pnpm --filter @por-aqui/database db:reset",
     "dev:packages": "turbo run watch --parallel",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "check:env": "node scripts/check-env.mjs"
   },
   "devDependencies": {
     "turbo": "2.11.7",
